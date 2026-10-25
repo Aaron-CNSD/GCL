@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';
+import {resourceAPI} from './glasscraft-api.mjs';
+const req=(path,init)=>new Request('https://example.com/glasscraft/api'+path,init);
+assert.equal(await resourceAPI(new Request('https://example.com/app/')),null);
+assert.equal((await resourceAPI(req('/search?type=wrong'))).status,400);
+assert.equal((await resourceAPI(req('/search?q='+ 'x'.repeat(121)))).status,400);
+assert.equal((await resourceAPI(req('/health',{method:'POST'}))).status,405);
+assert.equal((await resourceAPI(req('/missing'))).status,404);
+assert.equal((await resourceAPI(req('/health',{method:'OPTIONS'}))).status,204);
+let target;globalThis.fetch=async url=>{target=new URL(url);return Response.json({hits:[]})};
+assert.equal((await resourceAPI(req('/search?type=shader&q=a%26b&version=1.21'))).status,200);
+assert.equal(target.searchParams.get('query'),'a&b');
+assert.deepEqual(JSON.parse(target.searchParams.get('facets')),[['project_type:shader'],['versions:1.21']]);
+await resourceAPI(req('/projects/sodium/versions?version=1.21'));assert.equal(target.hostname,'api.modrinth.com');
+globalThis.fetch=async()=>{throw new Error('network')};assert.equal((await resourceAPI(req('/versions'))).status,502);
+console.log('API routing, bounds, methods, upstream encoding and error handling passed');
