@@ -20,7 +20,7 @@ actor Engine {
     func folder(_ name: String) throws -> URL { let p=root.appendingPathComponent(name); try FileManager.default.createDirectory(at:p,withIntermediateDirectories:true); return p }
     func fetch(_ url: String) async throws -> Data {
         guard let u=URL(string:url),u.scheme == "https" else { throw LaunchError(message:"无效下载地址") }
-        var req=URLRequest(url:u); req.timeoutInterval=90; req.setValue("GCL/0.7 (Aaron-CNSD/GCL-iOS)",forHTTPHeaderField:"User-Agent")
+        var req=URLRequest(url:u); req.timeoutInterval=90; req.setValue("GCL/0.1 (Aaron-CNSD/GCL)",forHTTPHeaderField:"User-Agent")
         for attempt in 0..<3 {
             try Task.checkCancellation()
             do {
@@ -323,7 +323,7 @@ actor Engine {
             try await group.waitForAll()
         }
         let uuid=Insecure.MD5.hash(data:Data("OfflinePlayer:\(name)".utf8)).map{String(format:"%02x",$0)}.joined()
-        let vars=["auth_player_name":name,"version_name":version,"game_directory":game.path,"assets_root":assets.path,"assets_index_name":indexID,"auth_uuid":uuid,"auth_access_token":"0","user_type":"legacy","version_type":"release","natives_directory":natives.path,"launcher_name":"GCL","launcher_version":"0.7","classpath":(classpath+[jar.path]).joined(separator:":"),"library_directory":libs.path,"classpath_separator":":","clientid":"","auth_xuid":""]
+        let vars=["auth_player_name":name,"version_name":version,"game_directory":game.path,"assets_root":assets.path,"assets_index_name":indexID,"auth_uuid":uuid,"auth_access_token":"0","user_type":"legacy","version_type":"release","natives_directory":natives.path,"launcher_name":"GCL","launcher_version":"0.1","classpath":(classpath+[jar.path]).joined(separator:":"),"library_directory":libs.path,"classpath_separator":":","clientid":"","auth_xuid":""]
         func expand(_ s:String)->String {var t=s;for (k,v) in vars {t=t.replacingOccurrences(of:"${\(k)}",with:v)};return t}
         func arguments(_ name:String)->[String] {
             let list=(meta["arguments"] as? [String:Any])?[name] as? [Any] ?? []

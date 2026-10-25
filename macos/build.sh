@@ -8,6 +8,7 @@ for arch in arm64 x86_64; do
 done
 lipo -create "$out/GCL-arm64" "$out/GCL-x86_64" -output "$out/GCL.app/Contents/MacOS/GCL"
 cp macos/Info.plist "$out/GCL.app/Contents/Info.plist"
+cp macos/Assets/GCL.icns "$out/GCL.app/Contents/Resources/GCL.icns"
 cp LICENSE CONTRIBUTORS.md "$out/GCL.app/Contents/Resources/"
 mkdir -p "$out/GCL.app/Contents/Resources/ThirdParty"
 cp docs/third-party/* "$out/GCL.app/Contents/Resources/ThirdParty/"

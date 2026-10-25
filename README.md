@@ -31,3 +31,5 @@
 ## 构建
 
 `bash scripts/package.sh /绝对路径/输出目录`。需要 macOS、Xcode 命令行工具和 JDK 17+（JAR 使用 Java 8 目标字节码）。构建器输出 ZIP、DMG、JAR 与 SHA256SUMS。许可 GPL-3.0，第三方组件遵循其各自许可。
+
+独立项目首个开发版本为 **v0.1.0**。应用与 DMG 现使用 GCL 玻璃方块图标；JAR 文件在 Finder 中通常显示 Java 图标，运行后打开的 GCL.app 使用应用图标。

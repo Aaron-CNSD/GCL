@@ -1,3 +1,7 @@
+# GCL v0.1.0
+
+GCL 独立项目从 v0.1.0 开始编号。下方 0.2–0.6 章节为原 GlassCraft 开发历史与功能说明，并非 GCL 的发行版本。
+
 # GlassCraft macOS 0.2 开发预览
 
 这是本项目新增的 SwiftUI 原生 Mac 应用，不是 Amethyst IPA 的改名包。源码位于 macos/，沿用本仓库 GPL-3.0 许可。
