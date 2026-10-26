@@ -20,7 +20,7 @@ actor Engine {
     func folder(_ name: String) throws -> URL { let p=root.appendingPathComponent(name); try FileManager.default.createDirectory(at:p,withIntermediateDirectories:true); return p }
     func fetch(_ url: String) async throws -> Data {
         guard let u=URL(string:url),u.scheme == "https" else { throw LaunchError(message:"无效下载地址") }
-        var req=URLRequest(url:u); req.timeoutInterval=90; req.setValue("GCL/0.1 (Aaron-CNSD/GCL)",forHTTPHeaderField:"User-Agent")
+        var req=URLRequest(url:u); req.timeoutInterval=90; req.setValue("GCL/0.2 (Aaron-CNSD/GCL)",forHTTPHeaderField:"User-Agent")
         for attempt in 0..<3 {
             try Task.checkCancellation()
             do {
@@ -257,9 +257,10 @@ actor Engine {
         progress("整合包已导入。可选客户端模组默认跳过。请选择整合包后启动。")
         return id
     }
-    func launch(version:String,name:String,memory:Int,packID:String?=nil,server:String?=nil,progress:@escaping @Sendable (String)->Void) async throws {
+    func launch(version:String,name:String,memory:Int,packID:String?=nil,server:String?=nil,windowWidth:Int=1280,windowHeight:Int=720,progress:@escaping @Sendable (String)->Void) async throws {
         if let p=running,p.isRunning {throw LaunchError(message:"游戏已在运行，请先关闭游戏")}
         guard name.range(of:"^[A-Za-z0-9_]{3,16}$",options:.regularExpression) != nil else {throw LaunchError(message:"用户名须为 3–16 位英文字母、数字或下划线")}
+        _=try LaunchSettings(memoryMB:memory,width:windowWidth,height:windowHeight).validated()
         let joinArguments=try multiplayerArguments(version:version,address:server)
         progress("读取版本资料…")
         let manifest=try await object("https://piston-meta.mojang.com/mc/game/version_manifest_v2.json")
@@ -323,7 +324,7 @@ actor Engine {
             try await group.waitForAll()
         }
         let uuid=Insecure.MD5.hash(data:Data("OfflinePlayer:\(name)".utf8)).map{String(format:"%02x",$0)}.joined()
-        let vars=["auth_player_name":name,"version_name":version,"game_directory":game.path,"assets_root":assets.path,"assets_index_name":indexID,"auth_uuid":uuid,"auth_access_token":"0","user_type":"legacy","version_type":"release","natives_directory":natives.path,"launcher_name":"GCL","launcher_version":"0.1","classpath":(classpath+[jar.path]).joined(separator:":"),"library_directory":libs.path,"classpath_separator":":","clientid":"","auth_xuid":""]
+        let vars=["auth_player_name":name,"version_name":version,"game_directory":game.path,"assets_root":assets.path,"assets_index_name":indexID,"auth_uuid":uuid,"auth_access_token":"0","user_type":"legacy","version_type":"release","natives_directory":natives.path,"launcher_name":"GCL","launcher_version":"0.2","classpath":(classpath+[jar.path]).joined(separator:":"),"library_directory":libs.path,"classpath_separator":":","clientid":"","auth_xuid":""]
         func expand(_ s:String)->String {var t=s;for (k,v) in vars {t=t.replacingOccurrences(of:"${\(k)}",with:v)};return t}
         func arguments(_ name:String)->[String] {
             let list=(meta["arguments"] as? [String:Any])?[name] as? [Any] ?? []
@@ -337,7 +338,7 @@ actor Engine {
         guard let main=meta["mainClass"] as? String else{throw LaunchError(message:"缺少启动入口")}
         let logs=try folder("logs").appendingPathComponent("latest.log");FileManager.default.createFile(atPath:logs.path,contents:Data())
         let handle=try FileHandle(forWritingTo:logs)
-        let p=Process();p.executableURL=runtime;p.currentDirectoryURL=game;p.arguments=["-Xmx\(memory)M"]+arguments("jvm")+[main]+arguments("game")+joinArguments;p.standardOutput=handle;p.standardError=handle
+        let p=Process();p.executableURL=runtime;p.currentDirectoryURL=game;p.arguments=["-Xmx\(memory)M"]+arguments("jvm")+[main]+arguments("game")+["--width",String(windowWidth),"--height",String(windowHeight)]+joinArguments;p.standardOutput=handle;p.standardError=handle
         running=p;defer{running=nil;try? handle.close()};progress("正在启动游戏，日志：\(logs.path)")
         let code=try await execute(p);try Task.checkCancellation()
         if code != 0 {throw LaunchError(message:"游戏退出（\(p.terminationStatus)），请查看 logs/latest.log。旧版本的原生依赖可能不支持此 Mac 架构。")}

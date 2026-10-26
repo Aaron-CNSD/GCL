@@ -1,0 +1,40 @@
+import Foundation
+@main struct WorkspaceTests {
+ static func main() async throws {
+    let root=URL(fileURLWithPath:"/private/tmp/gcl-workspace-"+UUID().uuidString),engine=Engine(root:root)
+    defer{try? FileManager.default.removeItem(at:root)}
+    let a=try await engine.createVanilla(name:"Adventure",version:"1.21.1"),b=try await engine.createVanilla(name:"Creative",version:"1.21.1")
+    precondition(a != b)
+    let ad=try await engine.gameFolder(version:"1.21.1",packID:a),bd=try await engine.gameFolder(version:"1.21.1",packID:b);precondition(ad != bd)
+    try await engine.renameProfile(id:a,name:"Renamed")
+    let list=try await engine.packList();precondition(list.count==2 && list.contains{$0["name"]=="Renamed"})
+    let prefs=LaunchSettings(memoryMB:6144,width:1920,height:1080)
+    try await engine.saveSettings(prefs,version:"1.21.1",packID:a)
+    let saved=try await engine.settings(version:"1.21.1",packID:a),other=try await engine.settings(version:"1.21.1",packID:b)
+    precondition(saved==prefs && other==LaunchSettings())
+    var rejected=false;do{try await engine.saveSettings(LaunchSettings(memoryMB:1,width:0,height:0),version:"1.21.1",packID:a)}catch{rejected=true};precondition(rejected)
+    let mods=ad.appendingPathComponent("mods");try FileManager.default.createDirectory(at:mods,withIntermediateDirectories:true)
+    let bytes=Data("test mod content".utf8);try bytes.write(to:mods.appendingPathComponent("sample.jar"))
+    try FileManager.default.createSymbolicLink(at:mods.appendingPathComponent("linked.jar"),withDestinationURL:mods.appendingPathComponent("sample.jar"))
+    var local=try await engine.localMods(version:"1.21.1",packID:a);precondition(local.count==1 && local[0].enabled)
+    try await engine.setMod(name:"sample.jar",enabled:false,version:"1.21.1",packID:a)
+    local=try await engine.localMods(version:"1.21.1",packID:a);precondition(local.count==1 && !local[0].enabled)
+    let disabledData=try Data(contentsOf:mods.appendingPathComponent("sample.jar.disabled"));precondition(disabledData==bytes)
+    try await engine.setMod(name:"sample.jar.disabled",enabled:true,version:"1.21.1",packID:a)
+    rejected=false;do{try await engine.setMod(name:"../sample.jar",enabled:false,version:"1.21.1",packID:a)}catch{rejected=true};precondition(rejected)
+    try await engine.saveServer(name:"Home",address:"127.0.0.1:25565");try await engine.saveServer(name:"Home renamed",address:"127.0.0.1:25565")
+    let servers=try await engine.savedServers();precondition(servers.count==1 && servers[0].name=="Home renamed")
+    rejected=false;do{try await engine.saveServer(name:"Bad",address:"https://invalid/path")}catch{rejected=true};precondition(rejected)
+    let logs=try await engine.folder("logs");try Data((String(repeating:"x",count:70000)+"\nRealms authentication SignedJWT\n").utf8).write(to:logs.appendingPathComponent("latest.log"))
+    let tail=try await engine.logTail();precondition(tail.utf8.count<=65536)
+    let diagnostic=try await engine.diagnostics(version:"1.21.1",packID:a);precondition(diagnostic.contains("本地账号不支持 Realms"))
+    let zip=root.appendingPathComponent("backup.zip");try await engine.backup(version:"1.21.1",packID:a,destination:zip)
+    let unpack=root.appendingPathComponent("unpack");try FileManager.default.createDirectory(at:unpack,withIntermediateDirectories:true)
+    try await engine.run("/usr/bin/ditto",["-xk",zip.path,unpack.path])
+    let backed=try Data(contentsOf:unpack.appendingPathComponent("GCL-backup/game/mods/sample.jar"));precondition(backed==bytes)
+    let manifest=try JSONSerialization.jsonObject(with:Data(contentsOf:unpack.appendingPathComponent("GCL-backup/backup.json"))) as! [String:Any]
+    precondition(manifest["format"] as? String=="gcl-backup-v1")
+    rejected=false;do{try await engine.backup(version:"1.21.1",packID:a,destination:zip)}catch{rejected=true};precondition(rejected)
+    print("PASS: isolated instances, rename, per-profile settings, mod disable/enable preserves bytes, path and symlink checks, server favorites, log limits, Realms diagnosis and backup integrity/no-overwrite")
+ }
+}

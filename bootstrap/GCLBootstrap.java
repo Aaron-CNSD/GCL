@@ -7,7 +7,7 @@ import javax.swing.JOptionPane;
 
 /** macOS entry point for the bundled native GCL application. Not a cross-platform game engine. */
 public final class GCLBootstrap {
-    static final String VERSION="0.1.0";
+    static final String VERSION="0.2.0";
     static String hex(byte[] data){StringBuilder b=new StringBuilder();for(byte x:data)b.append(String.format("%02x",x&255));return b.toString();}
     static InputStream resource(String name) throws IOException {
         InputStream in=GCLBootstrap.class.getResourceAsStream(name);
@@ -34,7 +34,7 @@ public final class GCLBootstrap {
     public static void main(String[] args) {
         try {
             boolean verify=Arrays.asList(args).contains("--verify");
-            if(!verify && !System.getProperty("os.name","").toLowerCase(Locale.ROOT).contains("mac"))throw new IOException("GCL 0.1 的 JAR 是 macOS 原生应用入口，需要 macOS 13+；目前不支持 Windows 或 Linux。");
+            if(!verify && !System.getProperty("os.name","").toLowerCase(Locale.ROOT).contains("mac"))throw new IOException("GCL 0.2 的 JAR 是 macOS 原生应用入口，需要 macOS 13+；目前不支持 Windows 或 Linux。");
             Path parent=verify ? Paths.get(System.getProperty("java.io.tmpdir")):Paths.get(System.getProperty("user.home"),"Library","Application Support","GCL","jar-launches");
             Files.createDirectories(parent);
             Path folder=Files.createTempDirectory(parent,"gcl-"+VERSION+"-");
