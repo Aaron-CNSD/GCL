@@ -3,8 +3,8 @@
 | 平台 | 下载 | 启动器运行时 | 当前功能 | 验证情况 |
 | --- | --- | --- | --- | --- |
 | macOS 13+，Apple Silicon / Intel | DMG、ZIP、macOS JAR | 原生 SwiftUI；Mac JAR 入口另需 Java 8+ | 原有资源、实例、模组、皮肤与联机功能；正式版列表扩展为 1.7+ 与 26.x | 通用编译、签名、包校验；原生侧栏与工具栏已在本机打开检查 |
-| Windows x64 | 自带 Java 的 ZIP，解压运行 Start-GCL.cmd | 包内 Temurin 17 | 原版 / Fabric / Quilt、Java 准备、独立实例、模组搜索下载与启停、窗口/内存、日志 | 核心隔离测试与 Mac 上 Java 窗口检查；Windows CI 另行记录，尚未完成实际进入世界 |
-| Linux x64 桌面 | 自带 Java 的 tar.gz，解压运行 ./start-gcl.sh | 包内 Temurin 17 | 同 Windows；需要正常的桌面、显示服务和图形驱动 | 同上；发行版桌面和显卡差异仍可能影响运行 |
+| Windows x64 | 自带 Java 的 ZIP，解压运行 Start-GCL.cmd | 包内 Temurin 17 | 原版 / Fabric / Quilt、Java 准备、独立实例、模组搜索下载与启停、窗口/内存、日志 | 核心隔离测试及 Windows GitHub runner 的编译、核心测试、窗口构造/退出检查通过；尚未完成实际进入世界 |
+| Linux x64 桌面 | 自带 Java 的 tar.gz，解压运行 ./start-gcl.sh | 包内 Temurin 17 | 同 Windows；需要正常的桌面、显示服务和图形驱动 | Ubuntu GitHub runner 编译、核心测试与 Xvfb 窗口构造/退出检查通过；尚未进入世界，发行版桌面和显卡差异仍可能影响运行 |
 | iOS / iPadOS 14+，ARM64 | 侧载 IPA | iOS 专用 OpenJDK 8/17/21/25 + 图形适配 | GCL 原生首页与底层版本/实例、加载器、模组包和触控流程 | ARM64 原生及 Java 编译、完整包内容、签名校验；尚未在真实 iPhone/iPad 上安装、启用 JIT 或进入世界 |
 
 Apple 版使用 Apple 自己的 Liquid Glass API：macOS 26+ 的 `glassEffect`、系统分栏、工具栏与玻璃按钮；iOS 26+ 首页使用 `UIGlassEffect`。旧 Apple 系统回退系统材质。没有用彩色渐变、边缘描线和光晕模拟 Apple 玻璃。Windows / Linux 使用系统桌面控件，不声称调用 Apple Liquid Glass。
@@ -36,3 +36,5 @@ iOS 引擎来源：https://github.com/AngelAuraMC/Amethyst-iOS
 - iOS：macOS、Xcode、CMake、Python 3、完整 JDK 8。设置 `GCL_JDK8_HOME`，运行 `bash scripts/build-ios.sh /绝对路径/输出目录`。脚本只修改 `ios/build` 的构建副本，保留固定引擎提交；核对 `ios/runtime-lock.json` 后再打包。发布的 IPA 内含 `GCL-LICENSES`。
 
 所有平台仍是开发预览。没有 Microsoft 登录集成；本地账号不能进入 Realms 或要求正版验证的服务器。
+
+Windows / Ubuntu 验证记录（2026-10-26）：https://github.com/Aaron-CNSD/GCL/actions/runs/40310336573 。两个系统均通过核心测试、构建和 GUI 窗口构造/退出检查；它不是游戏进入世界测试。
