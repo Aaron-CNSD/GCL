@@ -33,3 +33,5 @@
 `bash scripts/package.sh /绝对路径/输出目录`。需要 macOS、Xcode 命令行工具和 JDK 17+（JAR 使用 Java 8 目标字节码）。构建器输出 ZIP、DMG、JAR 与 SHA256SUMS。许可 GPL-3.0，第三方组件遵循其各自许可。
 
 独立项目首个开发版本为 **v0.1.0**。应用与 DMG 现使用 GCL 像素草地方块图标；JAR 文件在 Finder 中通常显示 Java 图标，运行后打开的 GCL.app 使用应用图标。
+
+官网介绍页：https://aarongame.com/ 。单文件 HTML 源码位于 `website/index.html`，包含样式、交互式功能示意、下载入口和开发预览说明。
