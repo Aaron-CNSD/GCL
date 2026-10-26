@@ -20,7 +20,7 @@ actor Engine {
     func folder(_ name: String) throws -> URL { let p=root.appendingPathComponent(name); try FileManager.default.createDirectory(at:p,withIntermediateDirectories:true); return p }
     func fetch(_ url: String) async throws -> Data {
         guard let u=URL(string:url),u.scheme == "https" else { throw LaunchError(message:"无效下载地址") }
-        var req=URLRequest(url:u); req.timeoutInterval=90; req.setValue("GCL/0.2 (Aaron-CNSD/GCL)",forHTTPHeaderField:"User-Agent")
+        var req=URLRequest(url:u); req.timeoutInterval=90; req.setValue("GCL/0.3 (Aaron-CNSD/GCL)",forHTTPHeaderField:"User-Agent")
         for attempt in 0..<3 {
             try Task.checkCancellation()
             do {
@@ -49,8 +49,13 @@ actor Engine {
         p.standardOutput=FileHandle.nullDevice;p.standardError=FileHandle.nullDevice;try p.run();p.waitUntilExit()
         if p.terminationStatus != 0 {throw LaunchError(message:"工具执行失败：\(tool)")}
     }
-    func java(_ major:Int) async throws -> URL {
-        let base=try folder("java/\(major)")
+    func java(_ major:Int,forceIntel:Bool=false) async throws -> URL {
+        #if arch(arm64)
+        let useIntel=forceIntel || major<=8
+        #else
+        let useIntel=false
+        #endif
+        let base=try folder("java/\(major)"+(useIntel ? "-x64":""))
         func findJava()->URL? {
             let list=FileManager.default.enumerator(at:base,includingPropertiesForKeys:nil)
             while let p=list?.nextObject() as? URL {if p.path.hasSuffix("/Contents/Home/bin/java"),FileManager.default.isExecutableFile(atPath:p.path){return p}}
@@ -58,7 +63,7 @@ actor Engine {
         }
         if let j=findJava(){return j}
         #if arch(arm64)
-        let arch="aarch64"
+        let arch=useIntel ? "x64":"aarch64"
         #else
         let arch="x64"
         #endif
@@ -94,8 +99,7 @@ actor Engine {
         let manifest=try await object("https://piston-meta.mojang.com/mc/game/version_manifest_v2.json")
         return (manifest["versions"] as? [[String:Any]] ?? []).compactMap { v in
             guard v["type"] as? String == "release", let id=v["id"] as? String else{return nil}
-            let parts=id.split(separator:".").compactMap{Int($0)}
-            return parts.count>1 && parts[0]==1 && parts[1]>=19 ? id:nil
+            return VersionSupport.isSupported(id) ? id:nil
         }
     }
     func loaderVersions(game:String,kind:String) async throws -> [String] {
@@ -122,7 +126,7 @@ actor Engine {
         return (meta["versions"] as? [String] ?? []).filter{$0.hasPrefix(prefix)}.sorted{$0.compare($1,options:.numeric) == .orderedDescending}
     }
     func loaderProfile(game:String,kind:String,build:String,progress:@escaping @Sendable(String)->Void) async throws -> [String:Any] {
-        guard game.range(of:#"^1\.[0-9]+(\.[0-9]+)?$"#,options:.regularExpression) != nil,build.range(of:"^[A-Za-z0-9._+-]+$",options:.regularExpression) != nil else{throw LaunchError(message:"无效加载器版本")}
+        guard VersionSupport.isSupported(game),build.range(of:"^[A-Za-z0-9._+-]+$",options:.regularExpression) != nil else{throw LaunchError(message:"无效加载器版本")}
         if kind=="Fabric" || kind=="Quilt" {
             let base=kind=="Fabric" ? "https://meta.fabricmc.net/v2":"https://meta.quiltmc.org/v3"
             let profile=try await object("\(base)/versions/loader/\(game)/\(build)/profile/json")
@@ -208,8 +212,7 @@ actor Engine {
         try run("/usr/bin/ditto",["-xk",archive.path,unpack.path])
         let indexData=try Data(contentsOf:unpack.appendingPathComponent("modrinth.index.json"))
         guard let index=try JSONSerialization.jsonObject(with:indexData) as? [String:Any],index["formatVersion"] as? Int==1,index["game"] as? String=="minecraft",let deps=index["dependencies"] as? [String:String],let mc=deps["minecraft"],let files=index["files"] as? [[String:Any]] else{throw LaunchError(message:"不支持的 mrpack 清单")}
-        let parts=mc.split(separator:".").compactMap{Int($0)}
-        guard parts.count>=2,parts[0]==1,parts[1]>=19 else{throw LaunchError(message:"目前整合包仅支持 Minecraft 1.19+")}
+        guard VersionSupport.isSupported(mc) else{throw LaunchError(message:"目前整合包仅支持 1.7+ 与 26.x 正式版")}
         guard Set(deps.keys).isSubset(of:["minecraft","fabric-loader","quilt-loader","forge","neoforge"]),deps.keys.filter({$0 != "minecraft"}).count<=1 else{throw LaunchError(message:"不支持此整合包加载器组合")}
         var profile:[String:Any]=[:]
         for (key,kind) in [("fabric-loader","Fabric"),("quilt-loader","Quilt"),("forge","Forge"),("neoforge","NeoForge")] {
@@ -278,9 +281,12 @@ actor Engine {
             for key in ["jvm","game"] {args[key]=(args[key] as? [Any] ?? [])+((profile["arguments"] as? [String:Any])?[key] as? [Any] ?? [])}
             meta["arguments"]=args
         }
-        let major=(meta["javaVersion"] as? [String:Any])?["majorVersion"] as? Int ?? 17
+        let major=(meta["javaVersion"] as? [String:Any])?["majorVersion"] as? Int ?? VersionSupport.fallbackJava(version)
         progress("准备 Java \(major)，首次下载需要时间…")
-        let runtime=try await java(major)
+        let parts=version.split(separator:".").compactMap{Int($0)}
+        let needsIntel=parts.count>1 && parts[0]==1 && parts[1]<19
+        if needsIntel{progress("旧版游戏使用 x64 Java；Apple Silicon 需要已安装 Rosetta 2") }
+        let runtime=try await java(major,forceIntel:needsIntel)
         let libs=try folder("libraries"),assets=try folder("assets"),game=try gameFolder(version:version,packID:packID),natives=try folder("natives/\(version)")
 
         guard let client=(meta["downloads"] as? [String:Any])?["client"] as? [String:Any] else {throw LaunchError(message:"缺少游戏文件")}
@@ -323,10 +329,16 @@ actor Engine {
             }
             try await group.waitForAll()
         }
-        let uuid=Insecure.MD5.hash(data:Data("OfflinePlayer:\(name)".utf8)).map{String(format:"%02x",$0)}.joined()
-        let vars=["auth_player_name":name,"version_name":version,"game_directory":game.path,"assets_root":assets.path,"assets_index_name":indexID,"auth_uuid":uuid,"auth_access_token":"0","user_type":"legacy","version_type":"release","natives_directory":natives.path,"launcher_name":"GCL","launcher_version":"0.2","classpath":(classpath+[jar.path]).joined(separator:":"),"library_directory":libs.path,"classpath_separator":":","clientid":"","auth_xuid":""]
+        if indexJSON?["virtual"] as? Bool==true || indexJSON?["map_to_resources"] as? Bool==true {
+            let base=indexJSON?["map_to_resources"] as? Bool==true ? game.appendingPathComponent("resources"):assets.appendingPathComponent("virtual/\(indexID)")
+            for (path,item) in objects {let valid=try safePath(path);guard let hash=item["hash"] as? String else{continue};let source=assets.appendingPathComponent("objects/\(hash.prefix(2))/\(hash)"),target=base.appendingPathComponent(valid);try FileManager.default.createDirectory(at:target.deletingLastPathComponent(),withIntermediateDirectories:true);if !FileManager.default.fileExists(atPath:target.path){try FileManager.default.copyItem(at:source,to:target)}}
+        }
+        let uuid=VersionSupport.offlineID(name)
+        let vars=["auth_player_name":name,"version_name":version,"game_directory":game.path,"assets_root":assets.path,"assets_index_name":indexID,"auth_uuid":uuid,"auth_access_token":"0","user_type":"legacy","version_type":"release","natives_directory":natives.path,"launcher_name":"GCL","launcher_version":"0.3","classpath":(classpath+[jar.path]).joined(separator:":"),"library_directory":libs.path,"classpath_separator":":","clientid":"","auth_xuid":"","user_properties":"{}","game_assets":assets.appendingPathComponent("virtual/\(indexID)").path]
         func expand(_ s:String)->String {var t=s;for (k,v) in vars {t=t.replacingOccurrences(of:"${\(k)}",with:v)};return t}
         func arguments(_ name:String)->[String] {
+            if name=="game",let legacy=meta["minecraftArguments"] as? String {return VersionSupport.legacyArguments(legacy).map(expand)}
+            if name=="jvm",(meta["arguments"] as? [String:Any])?["jvm"]==nil{return ["-Djava.library.path=\(natives.path)","-cp",vars["classpath"]!]}
             let list=(meta["arguments"] as? [String:Any])?[name] as? [Any] ?? []
             return list.flatMap{item->[String] in
                 if let s=item as? String{return [expand(s)]}

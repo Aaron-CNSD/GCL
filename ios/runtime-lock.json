@@ -1,0 +1,26 @@
+[
+  {
+    "java": "25",
+    "archive": "jre25-ios-arm64-20260710-release.tar.xz",
+    "sha256": "ac71e5bc4191afc712bc74d374663207f7f4a9ee327300b623abc07b6f787c42",
+    "source": "https://assets.angelauramc.dev/openjdk/ios-arm64/jre25-ios-aarch64.zip"
+  },
+  {
+    "java": "8",
+    "archive": "jre8-ios-arm64-20260712-release.tar.xz",
+    "sha256": "a90781ac0cb6f59aa723aa2b8a8ace2feb620917cefb34aa5edaea8e81d1c657",
+    "source": "https://assets.angelauramc.dev/openjdk/ios-arm64/jre8-ios-aarch64.zip"
+  },
+  {
+    "java": "21",
+    "archive": "jre21-ios-arm64-20260708-release.tar.xz",
+    "sha256": "29a79ad37796b02f130c677a3d512082b353c1bb20c608e7cacbab60e0843170",
+    "source": "https://assets.angelauramc.dev/openjdk/ios-arm64/jre21-ios-aarch64.zip"
+  },
+  {
+    "java": "17",
+    "archive": "jre17-ios-arm64-20260708-release.tar.xz",
+    "sha256": "cf1b841740e7aa3bc1d15f31dbd074d45571442a2c117e9540ffffc265005807",
+    "source": "https://assets.angelauramc.dev/openjdk/ios-arm64/jre17-ios-aarch64.zip"
+  }
+]

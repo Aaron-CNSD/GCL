@@ -15,3 +15,11 @@
 - Mojang / Microsoft：游戏元数据与资源源站；Modrinth：公开资源元数据与下载源。
 
 GCL 不打包游戏文件或上述加载器 / 皮肤 / 联机运行时，实际使用时从相应官方源下载。
+
+## v0.3.0 跨平台底层
+
+- Amethyst / PojavLauncher 及其贡献者：iOS JVM、图形和触控适配。固定来源见 ios/engine 子模块；保留原始 GPL 与第三方许可证。
+- Google / Gson 贡献者：Java 桌面 JSON 解析，Apache-2.0，许可见 desktop/lib/。
+- Eclipse Adoptium / OpenJDK 贡献者：桌面 Java 运行时；发布包保留各自许可证与来源校验记录。
+
+不将上游贡献者虚构为 GCL 直接提交者。

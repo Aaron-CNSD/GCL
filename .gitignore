@@ -3,3 +3,6 @@ artifacts/
 *.class
 
 macos/Assets/GCL.iconset/
+.tools/
+desktop/build/
+ios/build/

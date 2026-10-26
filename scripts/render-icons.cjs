@@ -1,0 +1,6 @@
+const fs=require('fs'),path=require('path'),sharp=require('sharp'),{execFileSync}=require('child_process');
+(async()=>{const base=path.resolve(__dirname,'..'),asset=path.join(base,'macos/Assets'),source=fs.readFileSync(path.join(asset,'GCL.svg'));const iconset=path.join(asset,'GCL.iconset');fs.mkdirSync(iconset,{recursive:true});
+for(const size of [16,32,128,256,512])for(const factor of [1,2])await sharp(source).resize(size*factor,size*factor).png().toFile(path.join(iconset,`icon_${size}x${size}${factor===2?'@2x':''}.png`));
+await sharp(source).resize(1024).png().toFile(path.join(asset,'GCL-preview.png'));
+execFileSync('/usr/bin/iconutil',['-c','icns',iconset,'-o',path.join(asset,'GCL.icns')]);
+console.log('Rendered GCL SVG, PNG and ICNS');})();

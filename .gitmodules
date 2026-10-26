@@ -1,0 +1,3 @@
+[submodule "ios/engine"]
+	path = ios/engine
+	url = https://github.com/Aaron-CNSD/GlassCraft-iOS.git

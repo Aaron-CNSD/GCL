@@ -7,7 +7,7 @@ import javax.swing.JOptionPane;
 
 /** macOS entry point for the bundled native GCL application. Not a cross-platform game engine. */
 public final class GCLBootstrap {
-    static final String VERSION="0.2.0";
+    static final String VERSION="0.3.0";
     static String hex(byte[] data){StringBuilder b=new StringBuilder();for(byte x:data)b.append(String.format("%02x",x&255));return b.toString();}
     static InputStream resource(String name) throws IOException {
         InputStream in=GCLBootstrap.class.getResourceAsStream(name);

@@ -15,7 +15,7 @@ extension Engine {
     func settingsURL(version:String,packID:String?) throws -> URL {
         let key:String
         if let id=packID{guard UUID(uuidString:id) != nil else{throw LaunchError(message:"无效配置")};key=id}
-        else{guard version.range(of:#"^1\.[0-9]+(\.[0-9]+)?$"#,options:.regularExpression) != nil else{throw LaunchError(message:"无效游戏版本")};key="vanilla-"+version}
+        else{guard VersionSupport.isSupported(version) else{throw LaunchError(message:"无效游戏版本")};key="vanilla-"+version}
         return try folder("settings").appendingPathComponent(key+".json")
     }
     func settings(version:String,packID:String?) throws -> LaunchSettings {
@@ -28,7 +28,7 @@ extension Engine {
     }
     func createVanilla(name:String,version:String) throws -> String {
         try idleForChange();let title=name.trimmingCharacters(in:.whitespacesAndNewlines)
-        guard !title.isEmpty,title.count<=64,version.range(of:#"^1\.[0-9]+(\.[0-9]+)?$"#,options:.regularExpression) != nil else{throw LaunchError(message:"请输入有效名称与游戏版本")}
+        guard !title.isEmpty,title.count<=64,VersionSupport.isSupported(version) else{throw LaunchError(message:"请输入有效名称与游戏版本")}
         let id=UUID().uuidString,record:[String:Any]=["id":id,"name":title,"minecraft":version,"loaderProfile":[:]]
         try JSONSerialization.data(withJSONObject:record).write(to:folder("packs").appendingPathComponent(id+".json"),options:.atomic)
         _=try gameFolder(version:version,packID:id);return id
@@ -85,7 +85,7 @@ extension Engine {
         let mods=try localMods(version:version,packID:packID),settings=try self.settings(version:version,packID:packID),log=try logTail()
         let javaDir=root.appendingPathComponent("java")
         let runtimes=(try? FileManager.default.contentsOfDirectory(atPath:javaDir.path)) ?? []
-        var result="GCL 0.2.0\n系统：\(ProcessInfo.processInfo.operatingSystemVersionString)\n游戏：\(version)\n配置：\(packID ?? "默认原版")\n内存：\(settings.memoryMB) MB\n窗口：\(settings.width) × \(settings.height)\n已准备 Java：\(runtimes.joined(separator:", "))\n模组：\(mods.filter{$0.enabled}.count) 启用 / \(mods.count) 总计\n"
+        var result="GCL 0.3.0\n系统：\(ProcessInfo.processInfo.operatingSystemVersionString)\n游戏：\(version)\n配置：\(packID ?? "默认原版")\n内存：\(settings.memoryMB) MB\n窗口：\(settings.width) × \(settings.height)\n已准备 Java：\(runtimes.joined(separator:", "))\n模组：\(mods.filter{$0.enabled}.count) 启用 / \(mods.count) 总计\n"
         if log.contains("Realms") && (log.contains("authentication") || log.contains("SignedJWT")){result+="\n检测到 Realms 登录失败：本地账号不支持 Realms；这条消息本身不证明单机或离线服务器启动失败。\n"}
         if log.contains("UnsatisfiedLinkError"){result+="\n检测到本地库加载失败，请核对游戏版本与 Mac CPU 架构。\n"}
         return result

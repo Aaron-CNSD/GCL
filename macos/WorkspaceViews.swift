@@ -25,7 +25,7 @@ extension LauncherView {
         Text("一个配置对应一个独立游戏目录。当前 Minecraft：\(m.selected)").foregroundStyle(.secondary)
         HStack{TextField("新配置名称",text:$m.newProfileName).textFieldStyle(.roundedBorder);Button("新建原版配置"){m.createProfile()}.disabled(m.newProfileName.trimmingCharacters(in:.whitespaces).isEmpty);Button("导入 .mrpack"){m.importModpack()}}
         if m.packs.isEmpty{Text("还没有独立配置。你可以新建原版，或安装一个加载器。").font(.callout).foregroundStyle(.secondary)}
-        ForEach(m.packs,id:\.self){pack in HStack{Image(systemName:"cube.box.fill").font(.title2).foregroundStyle(.green);VStack(alignment:.leading,spacing:5){Text(pack["name"] ?? "未命名配置").font(.headline);Text("Minecraft "+(pack["minecraft"] ?? "未知")).font(.caption).foregroundStyle(.secondary)};Spacer();if pack["id"]==m.packID{Text("当前").font(.caption).foregroundStyle(.green)};Button("使用"){m.selectProfile(pack)}}.padding(14).background(.quaternary,in:RoundedRectangle(cornerRadius:13))}
+        ForEach(m.packs,id:\.self){pack in HStack{GameTile(size:42);VStack(alignment:.leading,spacing:5){Text(pack["name"] ?? "未命名配置").font(.headline);Text("Minecraft "+(pack["minecraft"] ?? "未知")).font(.caption).foregroundStyle(.secondary)};Spacer();if pack["id"]==m.packID{Text("当前").font(.caption).foregroundStyle(.green)};Button("使用"){m.selectProfile(pack)}}.padding(14).background(.quaternary,in:RoundedRectangle(cornerRadius:13))}
         if !m.packID.isEmpty{Divider();HStack{TextField("当前配置名称",text:$m.renameText).textFieldStyle(.roundedBorder);Button("重命名"){m.renameProfile()}}}
         HStack{Button("打开当前目录"){m.openFolder()};Button("导出配置备份 ZIP"){m.backupProfile()}}
         Text("备份包含当前配置、设置和游戏目录，可包含存档。当前不提供自动还原；不会把此 ZIP 当作 mrpack 导入。").font(.caption).foregroundStyle(.secondary)
@@ -44,7 +44,7 @@ extension LauncherView {
         Stepper("窗口宽度：\(m.windowWidth)",value:$m.windowWidth,in:640...3840,step:160)
         Stepper("窗口高度：\(m.windowHeight)",value:$m.windowHeight,in:360...2160,step:90)
         Picker("外观",selection:$m.appearance){Text("跟随系统").tag("system");Text("浅色").tag("light");Text("深色").tag("dark")}
-        Button("保存当前配置设置"){m.savePreferences()}.buttonStyle(.borderedProminent)
+        Button("保存当前配置设置"){m.savePreferences()}.modifier(ApplePrimaryButton())
         Text("macOS 26+ 使用系统液态玻璃；旧系统使用半透明材质。保存后，下次启动会应用窗口尺寸与内存。").font(.caption).foregroundStyle(.secondary)
     }.disabled(m.busy)}}
     var diagnostics:some View{VStack(spacing:16){GlassPanel{VStack(alignment:.leading,spacing:15){HStack{Label("任务与诊断",systemImage:"waveform.path.ecg").font(.title2.bold());Spacer();Button("刷新诊断"){m.refreshDiagnostics()}};Text(m.diagnosticText).font(.caption.monospaced()).textSelection(.enabled).frame(maxWidth:.infinity,alignment:.leading);Button("复制诊断摘要"){m.copyDiagnostic()};if !m.activities.isEmpty{Divider();ForEach(m.activities.suffix(12).reversed()){event in HStack(alignment:.top){Text(event.time,style:.time).font(.caption2.monospaced()).foregroundStyle(.secondary);Text(event.text).font(.caption).textSelection(.enabled);Spacer()}}}}}

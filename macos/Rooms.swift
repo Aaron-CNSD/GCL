@@ -128,11 +128,11 @@ struct RoomPanel:View {
         HStack{Button("安装系统组件"){r.install()};Button("启动陶瓦"){r.start()}.disabled(r.ready)}.disabled(r.busy)
         Text("首次安装由 macOS 系统安装器完成，需要你授权。陶瓦需要本地网络权限。").font(.caption).foregroundStyle(.secondary)
         Divider()
-        HStack{Button("启动游戏"){launch(nil)}.disabled(gameRunning);Button("创建房间"){r.create(player:username)}.buttonStyle(.borderedProminent).disabled(!r.ready || r.busy);Button("离开 / 重置"){r.leave()}.disabled(!r.ready || r.busy)}
+        HStack{Button("启动游戏"){launch(nil)}.disabled(gameRunning);Button("创建房间"){r.create(player:username)}.modifier(ApplePrimaryButton()).disabled(!r.ready || r.busy);Button("离开 / 重置"){r.leave()}.disabled(!r.ready || r.busy)}
         Text("房主先进入存档并“对局域网开放”，陶瓦自动扫描端口。游戏运行时仍可操作房间。").font(.caption).foregroundStyle(.secondary)
         HStack{TextField("粘贴陶瓦房间码 U/…",text:$r.code).textFieldStyle(.roundedBorder);Button("加入房间"){r.join(player:username)}.disabled(!r.ready || r.busy || r.code.isEmpty)}
         if !r.invitation.isEmpty{HStack{Text(r.invitation).font(.headline.monospaced()).textSelection(.enabled);Button("复制房间码"){r.copy()}}}
-        if r.phase=="guest-ok"{Button("启动并进入房间"){launch(r.address)}.buttonStyle(.borderedProminent).disabled(gameRunning);Text("备用直连地址：\(r.address)").font(.caption).textSelection(.enabled)}
+        if r.phase=="guest-ok"{Button("启动并进入房间"){launch(r.address)}.modifier(ApplePrimaryButton()).disabled(gameRunning);Text("备用直连地址：\(r.address)").font(.caption).textSelection(.enabled)}
         if !r.members.isEmpty{Text("房间成员："+r.members.joined(separator:"、")).font(.callout)}
         if !r.error.isEmpty{Text(r.error).foregroundStyle(.red).font(.caption).textSelection(.enabled)}
         HStack{if r.busy{ProgressView().controlSize(.small)};Text(r.status).font(.caption.monospaced()).textSelection(.enabled)}.padding(12).frame(maxWidth:.infinity,alignment:.leading).background(.quaternary,in:RoundedRectangle(cornerRadius:12))
