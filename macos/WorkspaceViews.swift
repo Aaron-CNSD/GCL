@@ -45,7 +45,7 @@ extension LauncherView {
         Stepper("窗口高度：\(m.windowHeight)",value:$m.windowHeight,in:360...2160,step:90)
         Divider()
         HStack{Text("背景");Spacer();Button("选择图片或视频…"){m.chooseBackdrop()};if !m.backdropPath.isEmpty{Button("恢复默认"){m.resetBackdrop()}}}
-        Text("PNG、JPEG、MP4 或 MOV，仅保存在本机；视频静音循环，窗口不活跃时暂停。").font(.caption).foregroundStyle(.secondary)
+        Text("PNG、JPEG、MP4 或 MOV，仅保存在本机；视频静音循环，窗口不活跃时暂停。默认读取本机已下载的 Minecraft 全景资源。").font(.caption).foregroundStyle(.secondary)
         if #available(macOS 26.0,*) {Picker("玻璃质感",selection:$clearGlass){Text("磨砂").tag(false);Text("通透").tag(true)}.pickerStyle(.segmented).frame(maxWidth:300)}
         Picker("外观",selection:$m.appearance){Text("跟随系统").tag("system");Text("浅色").tag("light");Text("深色").tag("dark")}
         Button("保存当前配置设置"){m.savePreferences()}.buttonStyle(.borderedProminent)

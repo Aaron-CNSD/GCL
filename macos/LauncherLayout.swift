@@ -8,9 +8,10 @@ struct LauncherMark:View {
 
 struct SidebarMaterial:ViewModifier {
     @Environment(\.accessibilityReduceTransparency) private var reduced
+    @AppStorage("clearGlass") private var clear=false
     @ViewBuilder func body(content:Content)->some View {
         if reduced {content.background(Color(nsColor:.controlBackgroundColor))}
-        else if #available(macOS 26.0,*) {content.glassEffect(.regular,in:Rectangle())}
+        else if #available(macOS 26.0,*) {content.glassEffect(clear ? .clear:.regular,in:Rectangle())}
         else {content.background(.ultraThinMaterial)}
     }
 }
@@ -26,7 +27,7 @@ extension LauncherView {
                     VStack(alignment:.leading,spacing:4) {
                         Text(m.page).font(.system(size:22,weight:.semibold))
                         Text(m.page == "开始游戏" ? "Minecraft: Java Edition":"当前配置 · \(selectedTitle)").font(.caption).foregroundStyle(.secondary)
-                    }
+                    }.padding(.horizontal,14).padding(.vertical,10).modifier(LauncherGlassSurface(radius:18))
                     Spacer()
                     Menu {
                         Button("选择背景图片或视频…"){m.chooseBackdrop()}
@@ -54,7 +55,7 @@ extension LauncherView {
                     }.frame(maxWidth:.infinity,maxHeight:.infinity).id(m.page).transition(pageTransition)
                 }
                 }.animation(reduceMotion ? nil:.easeInOut(duration:0.22),value:m.page)
-                statusLine
+                if m.page != "开始游戏" {statusLine}
             }
         }
         .frame(minWidth:980,minHeight:680)
@@ -109,23 +110,26 @@ extension LauncherView {
             }.padding(16).modifier(LauncherGlassSurface()).frame(maxWidth:410)
             Spacer(minLength:100)
             HStack(alignment:.bottom,spacing:20) {
-                VStack(alignment:.leading,spacing:12) {
-                    Button{m.importModpack()}label:{Label("导入整合包",systemImage:"shippingbox")}
-                    Button{m.openFolder()}label:{Label("打开游戏目录",systemImage:"folder")}
-                }.font(.caption).modifier(LauncherGlassButton()).disabled(m.busy)
+                VStack(alignment:.leading,spacing:10) {
+                    VStack(alignment:.leading,spacing:12) {
+                        Button{m.importModpack()}label:{Label("导入整合包",systemImage:"shippingbox")}
+                        Button{m.openFolder()}label:{Label("打开游戏目录",systemImage:"folder")}
+                    }.font(.caption).modifier(LauncherGlassButton()).disabled(m.busy)
+                    HStack(spacing:8){if m.busy{ProgressView().controlSize(.mini)};Text(m.status).font(.system(size:11)).foregroundStyle(.secondary).lineLimit(2);if m.busy{Button("停止"){m.cancel()}.font(.caption)}}.padding(.horizontal,10).padding(.vertical,6).modifier(LauncherGlassSurface(radius:12))
+                }.frame(maxWidth:420,alignment:.leading)
                 Spacer(minLength:0)
                 launchControl
             }
-        }.padding(.horizontal,28).padding(.top,4).padding(.bottom,28)
+        }.padding(.leading,28).padding(.trailing,16).padding(.top,4).padding(.bottom,16)
     }
     private var launchControl:some View {
-        LauncherGlassGroup {HStack(spacing:8) {
+        LauncherGlassGroup {HStack(alignment:.bottom,spacing:8) {
             Button{m.start()}label:{
                 HStack(spacing:14){Image(systemName:m.busy ? "hourglass":"play.fill").font(.system(size:19));VStack(alignment:.leading,spacing:5){Text(m.busy ? "正在运行":"启动游戏").font(.system(size:20,weight:.medium));Text(selectedTitle).font(.system(size:11)).lineLimit(1)}}
                     .frame(width:180,height:58).contentShape(Rectangle())
-            }.modifier(LauncherGlassButton(prominent:true)).disabled(m.busy)
-            Button{m.showVersionChooser.toggle()}label:{Image(systemName:"chevron.up").font(.system(size:12,weight:.semibold)).frame(width:26,height:58).contentShape(Rectangle())}
-                .modifier(LauncherGlassButton()).disabled(m.busy).help("选择版本与配置")
+            }.modifier(LauncherGlassButton(prominent:true,capsule:true)).disabled(m.busy)
+            Button{m.showVersionChooser.toggle()}label:{Image(systemName:"chevron.up").font(.system(size:12,weight:.semibold)).frame(width:34,height:40).contentShape(Rectangle())}
+                .modifier(LauncherGlassButton(capsule:true)).disabled(m.busy).help("选择版本与配置")
                 .popover(isPresented:$m.showVersionChooser,arrowEdge:.bottom){
                     VStack(alignment:.leading,spacing:16){
                         Text("选择游戏").font(.headline)

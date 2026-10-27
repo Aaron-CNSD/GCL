@@ -21,3 +21,13 @@ The accepted layout is unchanged. macOS 26 uses native glass surfaces and glass 
 The isolated native preview was opened after user confirmation. The version popover and settings page opened, the frost/clear control was changed, and navigation returned to the home page. The home glass surfaces and controls were captured. This is not a frame-rate measurement or gameplay test.
 
 The glass refinement compiled for Apple Silicon and Intel and passed app signature verification. Automatic approval initially required confirmation to run the local preview. The user explicitly approved running and checking it; the preview then opened successfully.
+
+## Rounded launch control and Minecraft background
+
+The home launch controls use capsule-shaped native buttons on macOS 26 and sit 16 points from the content's right and bottom edges. The home status text moved beside the quick actions, so it no longer pushes the launch control upward. The accepted sidebar layout remains.
+
+The default scene reads SHA-1-verified Minecraft panorama images already cached by Minecraft or GlassCraft on this Mac. It prefers the daylight mangrove scene, then the cherry-grove sunset, and displays it at 78% opacity unless Reduce Transparency is enabled. No Minecraft textures are bundled or copied into this repository. A machine without cached panorama assets still needs a locally imported background or downloaded game assets. Local video/image imports continue to override the default.
+
+The cached-background reader was checked against this Mac's real asset cache and returned a verified 1024×1024 image. It performs no network requests.
+
+The scenery revision compiled for Apple Silicon and Intel and passed signature verification. Opening this new preview was blocked by automatic approval, which requires a fresh user confirmation; its final native screenshot remains pending.

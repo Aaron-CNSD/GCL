@@ -6,6 +6,7 @@ struct LauncherBackdrop:View {
     @Environment(\.scenePhase) private var phase
     @Environment(\.accessibilityReduceMotion) private var reducedMotion
     @Environment(\.accessibilityReduceTransparency) private var reducedTransparency
+    private static let defaultImage=CachedMinecraftPanorama.image()
     var body:some View {
         GeometryReader{geometry in
             ZStack {
@@ -16,6 +17,9 @@ struct LauncherBackdrop:View {
                     }else if let image=NSImage(contentsOfFile:path) {
                         Image(nsImage:image).resizable().scaledToFill().frame(width:geometry.size.width,height:geometry.size.height)
                     }
+                }else if let image=Self.defaultImage {
+                    Image(nsImage:image).resizable().scaledToFill().frame(width:geometry.size.width,height:geometry.size.height)
+                        .opacity(reducedTransparency ? 1:0.78)
                 }
             }.frame(width:geometry.size.width,height:geometry.size.height).clipped()
         }.ignoresSafeArea().allowsHitTesting(false).accessibilityHidden(true)

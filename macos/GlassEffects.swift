@@ -15,10 +15,11 @@ struct LauncherGlassSurface:ViewModifier {
 
 struct LauncherGlassButton:ViewModifier {
     var prominent=false
+    var capsule=false
     @ViewBuilder func body(content:Content)->some View {
         if #available(macOS 26.0,*) {
-            if prominent {content.buttonStyle(.glassProminent).buttonBorderShape(.roundedRectangle(radius:18))}
-            else {content.buttonStyle(.glass).buttonBorderShape(.roundedRectangle(radius:18))}
+            if prominent {content.buttonStyle(.glassProminent).buttonBorderShape(capsule ? .capsule:.roundedRectangle(radius:18))}
+            else {content.buttonStyle(.glass).buttonBorderShape(capsule ? .capsule:.roundedRectangle(radius:18))}
         }else {
             if prominent {content.buttonStyle(.borderedProminent)}
             else {content.buttonStyle(.bordered)}
