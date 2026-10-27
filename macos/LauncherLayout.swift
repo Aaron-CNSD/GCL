@@ -10,9 +10,9 @@ struct SidebarMaterial:ViewModifier {
     @Environment(\.accessibilityReduceTransparency) private var reduced
     @AppStorage("clearGlass") private var clear=false
     @ViewBuilder func body(content:Content)->some View {
-        if reduced {content.background(Color(nsColor:.controlBackgroundColor))}
-        else if #available(macOS 26.0,*) {content.glassEffect(clear ? .clear:.regular,in:Rectangle())}
-        else {content.background(.ultraThinMaterial)}
+        if reduced {content.background(Color(nsColor:.controlBackgroundColor),in:RoundedRectangle(cornerRadius:26))}
+        else if #available(macOS 26.0,*) {content.glassEffect(clear ? .clear:.regular,in:RoundedRectangle(cornerRadius:26))}
+        else {content.background(.ultraThinMaterial,in:RoundedRectangle(cornerRadius:26))}
     }
 }
 
@@ -21,18 +21,17 @@ extension LauncherView {
     private var selectedTitle:String {m.packs.first(where:{$0["id"]==m.packID})?["name"] ?? "Minecraft \(m.selected)"}
     var body:some View {
         HStack(spacing:0) {
-            navigation.frame(width:224).modifier(SidebarMaterial())
+            navigation.frame(width:224).modifier(SidebarMaterial()).padding(.leading,12).padding(.vertical,12)
             VStack(alignment:.leading,spacing:0) {
                 HStack(alignment:.center) {
-                    VStack(alignment:.leading,spacing:4) {
-                        Text(m.page).font(.system(size:22,weight:.semibold))
-                        Text(m.page == "开始游戏" ? "Minecraft: Java Edition":"当前配置 · \(selectedTitle)").font(.caption).foregroundStyle(.secondary)
-                    }.padding(.horizontal,14).padding(.vertical,10).modifier(LauncherGlassSurface(radius:18))
+                    if m.page != "开始游戏" {
+                        VStack(alignment:.leading,spacing:4) {
+                            Text(m.page).font(.system(size:22,weight:.semibold))
+                            Text("当前配置 · \(selectedTitle)").font(.caption).foregroundStyle(.secondary)
+                        }.padding(.horizontal,14).padding(.vertical,10).modifier(LauncherGlassSurface(radius:18))
+                    }
                     Spacer()
-                    Menu {
-                        Button("选择背景图片或视频…"){m.chooseBackdrop()}
-                        if !m.backdropPath.isEmpty {Button("恢复默认背景"){m.resetBackdrop()}}
-                    } label:{Image(systemName:"photo").frame(width:22,height:22)}.menuStyle(.borderlessButton).fixedSize().help("更换背景")
+                    Button{m.chooseBackdrop()}label:{Label("更换背景",systemImage:"photo")}.modifier(LauncherGlassButton()).help("选择自己的图片或视频作为背景")
                 }.padding(.horizontal,28).padding(.top,24).padding(.bottom,20)
                 ZStack(alignment:.topLeading) {
                 if m.page == "开始游戏" {
@@ -94,20 +93,14 @@ extension LauncherView {
     private func sectionTitle(_ title:String)->some View {Text(title).font(.system(size:10,weight:.medium)).foregroundStyle(.secondary).padding(.horizontal,24).padding(.top,16).padding(.bottom,7)}
     private func navigationRow(_ item:(String,String))->some View {
         Button{withAnimation(reduceMotion ? nil:.spring(response:0.32,dampingFraction:0.88)){m.page=item.0}}label:{
-            HStack(spacing:12){Image(systemName:item.1).font(.system(size:15,weight:.regular)).frame(width:20);Text(item.0).font(.system(size:13,weight:m.page==item.0 ? .semibold:.regular));Spacer()}
-                .padding(.horizontal,12).frame(height:36)
+            HStack(spacing:12){Image(systemName:item.1).font(.system(size:15,weight:.regular)).frame(width:20);VStack(alignment:.leading,spacing:3){Text(item.0).font(.system(size:13,weight:m.page==item.0 ? .semibold:.regular));if item.0=="版本管理"{Text(selectedTitle).font(.system(size:10)).foregroundStyle(.secondary).lineLimit(1)}};Spacer()}
+                .padding(.horizontal,12).frame(height:item.0=="版本管理" ? 46:36)
                 .background{if m.page==item.0{NavigationGlassSelection().matchedGeometryEffect(id:"navigation-selection",in:navigationSelection)}}
                 .contentShape(Rectangle())
         }.buttonStyle(NavigationPressStyle()).padding(.horizontal,10).accessibilityAddTraits(m.page==item.0 ? .isSelected:[])
     }
     private var home:some View {
         VStack(alignment:.leading,spacing:0) {
-            HStack(spacing:12) {
-                Image(systemName:"square.stack.3d.up").font(.system(size:23,weight:.light)).foregroundStyle(.secondary)
-                VStack(alignment:.leading,spacing:3){Text(selectedTitle).font(.system(size:15,weight:.medium)).lineLimit(1);Text(m.packID.isEmpty ? "原版 · 独立游戏目录":"独立配置 · 模组与设置隔离").font(.caption).foregroundStyle(.secondary)}
-                Spacer()
-                Button("管理版本"){m.page="版本管理"}.buttonStyle(.borderless).font(.caption)
-            }.padding(16).modifier(LauncherGlassSurface()).frame(maxWidth:410)
             Spacer(minLength:100)
             HStack(alignment:.bottom,spacing:20) {
                 VStack(alignment:.leading,spacing:10) {
@@ -123,13 +116,14 @@ extension LauncherView {
         }.padding(.leading,28).padding(.trailing,16).padding(.top,4).padding(.bottom,16)
     }
     private var launchControl:some View {
-        LauncherGlassGroup {HStack(alignment:.bottom,spacing:8) {
+        HStack(spacing:0) {
             Button{m.start()}label:{
-                HStack(spacing:14){Image(systemName:m.busy ? "hourglass":"play.fill").font(.system(size:19));VStack(alignment:.leading,spacing:5){Text(m.busy ? "正在运行":"启动游戏").font(.system(size:20,weight:.medium));Text(selectedTitle).font(.system(size:11)).lineLimit(1)}}
-                    .frame(width:180,height:58).contentShape(Rectangle())
-            }.modifier(LauncherGlassButton(prominent:true,capsule:true)).disabled(m.busy)
-            Button{m.showVersionChooser.toggle()}label:{Image(systemName:"chevron.up").font(.system(size:12,weight:.semibold)).frame(width:34,height:40).contentShape(Rectangle())}
-                .modifier(LauncherGlassButton(capsule:true)).disabled(m.busy).help("选择版本与配置")
+                VStack(spacing:5){Text(m.busy ? "正在运行":"启动游戏").font(.system(size:21,weight:.medium));Text(selectedTitle).font(.system(size:12)).lineLimit(1)}
+                    .frame(width:212,height:76).contentShape(Rectangle())
+            }.buttonStyle(NavigationPressStyle()).disabled(m.busy)
+            Divider().frame(height:40)
+            Button{m.showVersionChooser.toggle()}label:{Image(systemName:"chevron.up").font(.system(size:15,weight:.semibold)).frame(width:48,height:76).contentShape(Rectangle())}
+                .buttonStyle(NavigationPressStyle()).disabled(m.busy).help("选择版本与配置")
                 .popover(isPresented:$m.showVersionChooser,arrowEdge:.bottom){
                     VStack(alignment:.leading,spacing:16){
                         Text("选择游戏").font(.headline)
@@ -140,7 +134,7 @@ extension LauncherView {
                         HStack{Spacer();Button("完成"){m.showVersionChooser=false}.keyboardShortcut(.defaultAction)}
                     }.padding(20).frame(width:280)
                 }
-        }}.accessibilityElement(children:.contain)
+        }.modifier(LauncherSplitGlass()).accessibilityElement(children:.contain)
     }
     private var statusLine:some View {
         HStack(spacing:8) {

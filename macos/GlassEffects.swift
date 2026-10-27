@@ -65,3 +65,13 @@ struct NavigationPressStyle:ButtonStyle {
             .animation(reduced ? nil:.easeOut(duration:0.12),value:configuration.isPressed)
     }
 }
+
+/// One shared glass outline keeps the split launch buttons exactly the same height.
+struct LauncherSplitGlass:ViewModifier {
+    @Environment(\.accessibilityReduceTransparency) private var reduced
+    @ViewBuilder func body(content:Content)->some View {
+        if reduced {content.background(Color.accentColor,in:RoundedRectangle(cornerRadius:24)).foregroundStyle(.white)}
+        else if #available(macOS 26.0,*) {content.glassEffect(.regular.tint(Color.accentColor.opacity(0.28)).interactive(),in:RoundedRectangle(cornerRadius:24))}
+        else {content.background(.ultraThinMaterial,in:RoundedRectangle(cornerRadius:24))}
+    }
+}

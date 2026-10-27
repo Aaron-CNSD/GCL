@@ -44,11 +44,11 @@ import UniformTypeIdentifiers
     init(){
         if demoMode {
             engine=Engine(root:FileManager.default.temporaryDirectory.appendingPathComponent("gcl-v02-preview-"+UUID().uuidString))
-            name="Player";server="";appearance="light";selected="1.21.1";versions=["1.21.1","1.20.1","1.19.4"];status="准备就绪";backdropPath=""
+            name="Player";server="";appearance="light";selected="1.21.1";versions=["1.21.1","1.20.1","1.19.4"];status="准备就绪"
         } else {engine=Engine()}
     }
     func chooseBackdrop(){
-        let panel=NSOpenPanel();panel.allowedContentTypes=[.png,.jpeg,.mpeg4Movie,.quickTimeMovie]
+        let panel=NSOpenPanel();panel.title="选择启动器背景";panel.message="支持 PNG、JPEG、MP4、MOV；选择后自动保存。";panel.allowsMultipleSelection=false;panel.canChooseDirectories=false;panel.allowedContentTypes=[.png,.jpeg,.mpeg4Movie,.quickTimeMovie]
         guard panel.runModal() == .OK,let source=panel.url else{return}
         do {
             let size=try source.resourceValues(forKeys:[.fileSizeKey]).fileSize ?? 0
@@ -92,6 +92,9 @@ struct LauncherView:View {
     @ObservedObject var m:Model
     @Namespace var navigationSelection
     @AppStorage("clearGlass") var clearGlass=false
+    @AppStorage("backdropOpacity") var backdropOpacity=1.0
+    @AppStorage("backdropBlur") var backdropBlur=0.0
+    @AppStorage("backdropFit") var backdropFit="fill"
     @Environment(\.accessibilityReduceMotion) var reduceMotion
     let pages=[("开始游戏","play.fill"),("版本管理","square.stack.3d.up"),("模组管理","puzzlepiece.extension"),("资源下载","square.and.arrow.down"),("一键联机","person.2.fill"),("我的皮肤","tshirt"),("任务与日志","waveform.path.ecg"),("启动设置","slider.horizontal.3"),("关于 GCL","info.circle")]
     var configuration:some View{GlassPanel{VStack(alignment:.leading,spacing:14){HStack{Text("游戏配置").font(.headline);Spacer();Button("打开目录"){m.openFolder()}}

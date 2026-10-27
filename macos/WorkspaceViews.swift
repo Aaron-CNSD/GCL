@@ -44,8 +44,13 @@ extension LauncherView {
         Stepper("窗口宽度：\(m.windowWidth)",value:$m.windowWidth,in:640...3840,step:160)
         Stepper("窗口高度：\(m.windowHeight)",value:$m.windowHeight,in:360...2160,step:90)
         Divider()
-        HStack{Text("背景");Spacer();Button("选择图片或视频…"){m.chooseBackdrop()};if !m.backdropPath.isEmpty{Button("恢复默认"){m.resetBackdrop()}}}
-        Text("PNG、JPEG、MP4 或 MOV，仅保存在本机；视频静音循环，窗口不活跃时暂停。默认读取本机已下载的 Minecraft 全景资源。").font(.caption).foregroundStyle(.secondary)
+        HStack{Text("背景");Spacer();Button("选择图片或视频…"){m.chooseBackdrop()};if !m.backdropPath.isEmpty{Button("移除背景"){m.resetBackdrop()}}}
+        Text("PNG、JPEG、MP4 或 MOV，仅保存在本机；视频静音循环，窗口不活跃时暂停。背景由你自己选择，关闭后重新打开也会保留。").font(.caption).foregroundStyle(.secondary)
+        if !m.backdropPath.isEmpty {
+            Picker("画面适配",selection:$backdropFit){Text("填满窗口").tag("fill");Text("完整显示").tag("fit")}.pickerStyle(.segmented).frame(maxWidth:300)
+            HStack{Text("背景强度");Slider(value:$backdropOpacity,in:0.25...1)}
+            HStack{Text("背景虚化");Slider(value:$backdropBlur,in:0...16)}
+        }
         if #available(macOS 26.0,*) {Picker("玻璃质感",selection:$clearGlass){Text("磨砂").tag(false);Text("通透").tag(true)}.pickerStyle(.segmented).frame(maxWidth:300)}
         Picker("外观",selection:$m.appearance){Text("跟随系统").tag("system");Text("浅色").tag("light");Text("深色").tag("dark")}
         Button("保存当前配置设置"){m.savePreferences()}.buttonStyle(.borderedProminent)

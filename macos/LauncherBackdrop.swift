@@ -6,20 +6,21 @@ struct LauncherBackdrop:View {
     @Environment(\.scenePhase) private var phase
     @Environment(\.accessibilityReduceMotion) private var reducedMotion
     @Environment(\.accessibilityReduceTransparency) private var reducedTransparency
-    private static let defaultImage=CachedMinecraftPanorama.image()
+    @AppStorage("backdropOpacity") private var opacity=1.0
+    @AppStorage("backdropBlur") private var blur=0.0
+    @AppStorage("backdropFit") private var fit="fill"
     var body:some View {
         GeometryReader{geometry in
             ZStack {
                 if reducedTransparency {Color(nsColor:.windowBackgroundColor)}else{WindowVibrancy()}
                 if !path.isEmpty,FileManager.default.fileExists(atPath:path) {
+                    Group {
                     if ["mp4","mov","m4v"].contains(URL(fileURLWithPath:path).pathExtension.lowercased()) {
-                        LocalBackdropVideo(url:URL(fileURLWithPath:path),paused:phase != .active || reducedMotion)
-                    }else if let image=NSImage(contentsOfFile:path) {
-                        Image(nsImage:image).resizable().scaledToFill().frame(width:geometry.size.width,height:geometry.size.height)
+                        LocalBackdropVideo(url:URL(fileURLWithPath:path),paused:phase != .active || reducedMotion,fill:fit=="fill")
+                    }else if let image=BackdropImageCache.image(path) {
+                        Image(nsImage:image).resizable().aspectRatio(contentMode:fit=="fit" ? .fit:.fill).frame(width:geometry.size.width,height:geometry.size.height)
                     }
-                }else if let image=Self.defaultImage {
-                    Image(nsImage:image).resizable().scaledToFill().frame(width:geometry.size.width,height:geometry.size.height)
-                        .opacity(reducedTransparency ? 1:0.78)
+                    }.blur(radius:blur).opacity(reducedTransparency ? 1:opacity)
                 }
             }.frame(width:geometry.size.width,height:geometry.size.height).clipped()
         }.ignoresSafeArea().allowsHitTesting(false).accessibilityHidden(true)
@@ -28,6 +29,7 @@ struct LauncherBackdrop:View {
 private struct LocalBackdropVideo:NSViewRepresentable {
     let url:URL
     let paused:Bool
+    let fill:Bool
     final class PlayerView:NSView {
         let videoLayer=AVPlayerLayer()
         var queue:AVQueuePlayer?
@@ -39,6 +41,15 @@ private struct LocalBackdropVideo:NSViewRepresentable {
         func load(_ url:URL){guard source != url else{return};queue?.pause();looper?.disableLooping();source=url;let player=AVQueuePlayer();player.isMuted=true;looper=AVPlayerLooper(player:player,templateItem:AVPlayerItem(url:url));queue=player;videoLayer.player=player}
     }
     func makeNSView(context:Context)->PlayerView{PlayerView(frame:.zero)}
-    func updateNSView(_ view:PlayerView,context:Context){view.load(url);if paused{view.queue?.pause()}else{view.queue?.play()}}
+    func updateNSView(_ view:PlayerView,context:Context){view.load(url);view.videoLayer.videoGravity = fill ? .resizeAspectFill:.resizeAspect;if paused{view.queue?.pause()}else{view.queue?.play()}}
     static func dismantleNSView(_ view:PlayerView,coordinator:()){view.queue?.pause();view.looper?.disableLooping();view.videoLayer.player=nil}
+}
+
+private enum BackdropImageCache {
+    private static let cache=NSCache<NSString,NSImage>()
+    static func image(_ path:String)->NSImage? {
+        if let image=cache.object(forKey:path as NSString){return image}
+        guard let image=NSImage(contentsOfFile:path) else{return nil}
+        cache.countLimit=3;cache.setObject(image,forKey:path as NSString);return image
+    }
 }
