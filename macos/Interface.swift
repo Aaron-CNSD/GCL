@@ -132,6 +132,6 @@ struct LauncherView:View {
 }
 
 #if !GLASSCRAFT_TESTS
-@main struct GCLApp:App{@StateObject var model=Model();var body:some Scene{WindowGroup{LauncherView(m:model)}.windowStyle(.titleBar).defaultSize(width:720,height:450).windowResizability(.contentMinSize)}}
+@main struct GCLApp:App{@StateObject var model=Model();var body:some Scene{WindowGroup{LauncherView(m:model)}.windowStyle(.titleBar).defaultSize(width:760,height:480).windowResizability(.contentMinSize)}}
 
 #endif

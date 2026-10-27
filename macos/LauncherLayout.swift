@@ -70,7 +70,7 @@ extension LauncherView {
         .background{LauncherBackdrop(path:m.backdropPath,playing:m.page == "开始游戏").equatable()}
         .tint(Color(red:0.18,green:0.38,blue:0.43))
         .accentColor(Color(red:0.18,green:0.38,blue:0.43))
-        .onAppear{if !m.didSetInitialWindowSize {m.didSetInitialWindowSize=true;DispatchQueue.main.async{NSApp.windows.first(where:{$0.canBecomeMain})?.setContentSize(NSSize(width:720,height:450))}};if !m.demoMode {m.refresh();updater.check()};m.loadWorkspace();if m.demoMode{DispatchQueue.main.asyncAfter(deadline:.now()+0.3){NSApp.activate(ignoringOtherApps:true);NSApp.windows.first?.makeKeyAndOrderFront(nil)}}}
+        .onAppear{if !m.didSetInitialWindowSize {m.didSetInitialWindowSize=true;DispatchQueue.main.async{NSApp.windows.first(where:{$0.canBecomeMain})?.setContentSize(NSSize(width:760,height:480))}};if !m.demoMode {m.refresh();updater.check()};m.loadWorkspace();if m.demoMode{DispatchQueue.main.asyncAfter(deadline:.now()+0.3){NSApp.activate(ignoringOtherApps:true);NSApp.windows.first?.makeKeyAndOrderFront(nil)}}}
         .onChange(of:m.selected){_ in m.resetResources();m.loadVersions();m.loadPreferences();m.refreshMods()}
         .onChange(of:m.packID){id in m.resetResources();m.loadPreferences();m.refreshMods();if let pack=m.packs.first(where:{$0["id"]==id}){m.selected=pack["minecraft"] ?? m.selected}}
         .onChange(of:m.appearance){UserDefaults.standard.set($0,forKey:"appearance")}
