@@ -14,3 +14,9 @@ Based on `3447ced`, retaining the v0.2.0 game engine and functional pages. The c
 `GCLDemoMode` keeps game data in a temporary directory and starts with generic Player. It preserves appearance/background preferences so the preview can be used to review customization. Public screenshots still require checking for personal data and user-supplied backgrounds.
 
 Validation: the current revision compiled for Apple Silicon and Intel, and the universal app passed signature verification. The user approved running this revision. The native preview was opened and its screenshot confirmed the inset rounded sidebar and equal-height joined launch controls. The labeled background button opened the expected PNG/JPEG/MP4/MOV picker; it was left open for the user to choose their own file. Import persistence was not tested in this pass. Compilation does not establish gameplay compatibility or measured animation frame rate.
+
+## Current HMCL-style revision (in progress)
+
+The user requested the actual HMCL built-in wallpaper and a less rounded interface. The revision adds a restrained blue header, a full-height rectangular sidebar and small-radius controls. Background replacement remains available; resetting a custom background returns to the bundled `DefaultBackground.jpg`.
+
+Apple Silicon compilation passed. The background loader and packaging hook are implemented, but the image is not bundled yet: the browser download gate explicitly reported that permission to download from GitHub was declined. Do not replace this missing file with a crop from the user's reference screenshot, retrieve it through a different download channel, or publish a package claiming to contain it. Obtain fresh explicit permission before downloading the official wallpaper. Its source/attribution must be recorded when the correct image is confirmed.

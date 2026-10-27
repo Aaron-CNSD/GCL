@@ -9,6 +9,7 @@ struct LauncherBackdrop:View {
     @AppStorage("backdropOpacity") private var opacity=1.0
     @AppStorage("backdropBlur") private var blur=0.0
     @AppStorage("backdropFit") private var fit="fill"
+    private static let bundled=Bundle.main.url(forResource:"DefaultBackground",withExtension:"jpg").flatMap{NSImage(contentsOf:$0)}
     var body:some View {
         GeometryReader{geometry in
             ZStack {
@@ -21,6 +22,8 @@ struct LauncherBackdrop:View {
                         Image(nsImage:image).resizable().aspectRatio(contentMode:fit=="fit" ? .fit:.fill).frame(width:geometry.size.width,height:geometry.size.height)
                     }
                     }.blur(radius:blur).opacity(reducedTransparency ? 1:opacity)
+                }else if let image=Self.bundled {
+                    Image(nsImage:image).resizable().aspectRatio(contentMode:fit=="fit" ? .fit:.fill).frame(width:geometry.size.width,height:geometry.size.height).blur(radius:blur).opacity(reducedTransparency ? 1:opacity)
                 }
             }.frame(width:geometry.size.width,height:geometry.size.height).clipped()
         }.ignoresSafeArea().allowsHitTesting(false).accessibilityHidden(true)

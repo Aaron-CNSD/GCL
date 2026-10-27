@@ -10,9 +10,9 @@ struct SidebarMaterial:ViewModifier {
     @Environment(\.accessibilityReduceTransparency) private var reduced
     @AppStorage("clearGlass") private var clear=false
     @ViewBuilder func body(content:Content)->some View {
-        if reduced {content.background(Color(nsColor:.controlBackgroundColor),in:RoundedRectangle(cornerRadius:26))}
-        else if #available(macOS 26.0,*) {content.glassEffect(clear ? .clear:.regular,in:RoundedRectangle(cornerRadius:26))}
-        else {content.background(.ultraThinMaterial,in:RoundedRectangle(cornerRadius:26))}
+        if reduced {content.background(Color(nsColor:.controlBackgroundColor),in:RoundedRectangle(cornerRadius:0))}
+        else if #available(macOS 26.0,*) {content.glassEffect(clear ? .clear:.regular,in:RoundedRectangle(cornerRadius:0))}
+        else {content.background(.ultraThinMaterial,in:RoundedRectangle(cornerRadius:0))}
     }
 }
 
@@ -20,15 +20,18 @@ extension LauncherView {
     private var pageTransition:AnyTransition {reduceMotion ? .identity:.opacity.combined(with:.offset(y:5))}
     private var selectedTitle:String {m.packs.first(where:{$0["id"]==m.packID})?["name"] ?? "Minecraft \(m.selected)"}
     var body:some View {
+        VStack(spacing:0) {
+            HStack(spacing:10){LauncherMark(size:26);Text("GCL · GlassCraft Launcher").font(.system(size:16,weight:.semibold));Spacer();Button{m.page="关于 GCL"}label:{Image(systemName:"questionmark.circle").font(.system(size:20))}.buttonStyle(.plain).help("关于 GCL")}
+                .foregroundStyle(.white).padding(.horizontal,18).frame(height:48).background(Color(red:0.35,green:0.43,blue:0.77))
         HStack(spacing:0) {
-            navigation.frame(width:224).modifier(SidebarMaterial()).padding(.leading,12).padding(.vertical,12)
+            navigation.frame(width:224).modifier(SidebarMaterial())
             VStack(alignment:.leading,spacing:0) {
                 HStack(alignment:.center) {
                     if m.page != "开始游戏" {
                         VStack(alignment:.leading,spacing:4) {
                             Text(m.page).font(.system(size:22,weight:.semibold))
                             Text("当前配置 · \(selectedTitle)").font(.caption).foregroundStyle(.secondary)
-                        }.padding(.horizontal,14).padding(.vertical,10).modifier(LauncherGlassSurface(radius:18))
+                        }.padding(.horizontal,14).padding(.vertical,10).modifier(LauncherGlassSurface(radius:6))
                     }
                     Spacer()
                     Button{m.chooseBackdrop()}label:{Label("更换背景",systemImage:"photo")}.modifier(LauncherGlassButton()).help("选择自己的图片或视频作为背景")
@@ -57,6 +60,7 @@ extension LauncherView {
                 if m.page != "开始游戏" {statusLine}
             }
         }
+        }
         .frame(minWidth:980,minHeight:680)
         .background{LauncherBackdrop(path:m.backdropPath)}
         .tint(Color(red:0.35,green:0.40,blue:0.70))
@@ -71,12 +75,9 @@ extension LauncherView {
 
     private var navigation:some View {
         VStack(alignment:.leading,spacing:0) {
-            HStack(spacing:10) {
-                LauncherMark(size:34)
-                VStack(alignment:.leading,spacing:2){Text("GCL").font(.system(size:19,weight:.semibold));Text("GlassCraft Launcher").font(.system(size:10)).foregroundStyle(.secondary)}
-            }.padding(.horizontal,18).padding(.top,22).padding(.bottom,20)
+            sectionTitle("账户")
             VStack(alignment:.leading,spacing:8) {
-                Text("本地玩家").font(.caption).foregroundStyle(.secondary)
+                Text("离线模式").font(.caption).foregroundStyle(.secondary)
                 HStack(spacing:9){Image(systemName:"keyboard").foregroundStyle(.secondary);TextField("玩家名称",text:$m.name).textFieldStyle(.plain).font(.system(size:14,weight:.medium))}.padding(.vertical,4)
             }.padding(.horizontal,22).padding(.bottom,18)
             Divider().padding(.horizontal,18)
@@ -90,7 +91,7 @@ extension LauncherView {
             Text("v0.2.0").font(.system(size:10,design:.monospaced)).foregroundStyle(.tertiary).padding(.leading,24).padding(.top,12).padding(.bottom,14)
         }
     }
-    private func sectionTitle(_ title:String)->some View {Text(title).font(.system(size:10,weight:.medium)).foregroundStyle(.secondary).padding(.horizontal,24).padding(.top,16).padding(.bottom,7)}
+    private func sectionTitle(_ title:String)->some View {VStack(alignment:.leading,spacing:6){Text(title).font(.system(size:12,weight:.medium)).foregroundStyle(.secondary);Divider()}.padding(.horizontal,20).padding(.top,18).padding(.bottom,9)}
     private func navigationRow(_ item:(String,String))->some View {
         Button{withAnimation(reduceMotion ? nil:.spring(response:0.32,dampingFraction:0.88)){m.page=item.0}}label:{
             HStack(spacing:12){Image(systemName:item.1).font(.system(size:15,weight:.regular)).frame(width:20);VStack(alignment:.leading,spacing:3){Text(item.0).font(.system(size:13,weight:m.page==item.0 ? .semibold:.regular));if item.0=="版本管理"{Text(selectedTitle).font(.system(size:10)).foregroundStyle(.secondary).lineLimit(1)}};Spacer()}
@@ -108,7 +109,7 @@ extension LauncherView {
                         Button{m.importModpack()}label:{Label("导入整合包",systemImage:"shippingbox")}
                         Button{m.openFolder()}label:{Label("打开游戏目录",systemImage:"folder")}
                     }.font(.caption).modifier(LauncherGlassButton()).disabled(m.busy)
-                    HStack(spacing:8){if m.busy{ProgressView().controlSize(.mini)};Text(m.status).font(.system(size:11)).foregroundStyle(.secondary).lineLimit(2);if m.busy{Button("停止"){m.cancel()}.font(.caption)}}.padding(.horizontal,10).padding(.vertical,6).modifier(LauncherGlassSurface(radius:12))
+                    HStack(spacing:8){if m.busy{ProgressView().controlSize(.mini)};Text(m.status).font(.system(size:11)).foregroundStyle(.secondary).lineLimit(2);if m.busy{Button("停止"){m.cancel()}.font(.caption)}}.padding(.horizontal,10).padding(.vertical,6).modifier(LauncherGlassSurface(radius:6))
                 }.frame(maxWidth:420,alignment:.leading)
                 Spacer(minLength:0)
                 launchControl

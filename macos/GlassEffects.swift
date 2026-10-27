@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct LauncherGlassSurface:ViewModifier {
-    var radius:CGFloat=18
+    var radius:CGFloat=6
     var interactive=false
     @Environment(\.accessibilityReduceTransparency) private var reduced
     @AppStorage("clearGlass") private var clear=false
@@ -18,8 +18,8 @@ struct LauncherGlassButton:ViewModifier {
     var capsule=false
     @ViewBuilder func body(content:Content)->some View {
         if #available(macOS 26.0,*) {
-            if prominent {content.buttonStyle(.glassProminent).buttonBorderShape(capsule ? .capsule:.roundedRectangle(radius:18))}
-            else {content.buttonStyle(.glass).buttonBorderShape(capsule ? .capsule:.roundedRectangle(radius:18))}
+            if prominent {content.buttonStyle(.glassProminent).buttonBorderShape(capsule ? .capsule:.roundedRectangle(radius:6))}
+            else {content.buttonStyle(.glass).buttonBorderShape(capsule ? .capsule:.roundedRectangle(radius:6))}
         }else {
             if prominent {content.buttonStyle(.borderedProminent)}
             else {content.buttonStyle(.bordered)}
@@ -52,9 +52,9 @@ struct WindowVibrancy:NSViewRepresentable {
 struct NavigationGlassSelection:View {
     @Environment(\.accessibilityReduceTransparency) private var reduced
     var body:some View {
-        if reduced {RoundedRectangle(cornerRadius:10).fill(Color.accentColor.opacity(0.18))}
-        else if #available(macOS 26.0,*) {RoundedRectangle(cornerRadius:10).fill(Color.accentColor.opacity(0.06)).glassEffect(.regular.tint(Color.accentColor.opacity(0.12)),in:RoundedRectangle(cornerRadius:10))}
-        else {RoundedRectangle(cornerRadius:10).fill(.thinMaterial)}
+        if reduced {RoundedRectangle(cornerRadius:4).fill(Color.accentColor.opacity(0.18))}
+        else if #available(macOS 26.0,*) {RoundedRectangle(cornerRadius:4).fill(Color.accentColor.opacity(0.06)).glassEffect(.regular.tint(Color.accentColor.opacity(0.12)),in:RoundedRectangle(cornerRadius:4))}
+        else {RoundedRectangle(cornerRadius:4).fill(.thinMaterial)}
     }
 }
 
@@ -66,12 +66,9 @@ struct NavigationPressStyle:ButtonStyle {
     }
 }
 
-/// One shared glass outline keeps the split launch buttons exactly the same height.
+/// A restrained, joined launch control matching the reference layout.
 struct LauncherSplitGlass:ViewModifier {
-    @Environment(\.accessibilityReduceTransparency) private var reduced
-    @ViewBuilder func body(content:Content)->some View {
-        if reduced {content.background(Color.accentColor,in:RoundedRectangle(cornerRadius:24)).foregroundStyle(.white)}
-        else if #available(macOS 26.0,*) {content.glassEffect(.regular.tint(Color.accentColor.opacity(0.28)).interactive(),in:RoundedRectangle(cornerRadius:24))}
-        else {content.background(.ultraThinMaterial,in:RoundedRectangle(cornerRadius:24))}
+    func body(content:Content)->some View {
+        content.background(Color(red:0.35,green:0.43,blue:0.77),in:RoundedRectangle(cornerRadius:6)).foregroundStyle(.white)
     }
 }
