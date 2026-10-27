@@ -10,7 +10,7 @@ extension Engine {
         guard let input=address?.trimmingCharacters(in:.whitespacesAndNewlines),!input.isEmpty else{return []}
         guard !input.contains(where:{$0.isWhitespace || "/?#@\\".contains($0)}),let url=URLComponents(string:"minecraft://"+input),let host=url.host,!host.isEmpty,(url.port ?? 25565)>0,(url.port ?? 25565)<65536 else{throw LaunchError(message:"服务器地址无效，请填写 host:port 或 [IPv6]:port")}
         let minor=Int(version.split(separator:".").dropFirst().first ?? "0") ?? 0
-        if minor>=20 {return ["--quickPlayMultiplayer",input]}
+        if minor>=20 || (Int(version.split(separator:".").first ?? "0") ?? 0)>=26 {return ["--quickPlayMultiplayer",input]}
         return ["--server",host,"--port",String(url.port ?? 25565)]
     }
     func activeLoader(_ id:String?) throws -> String {

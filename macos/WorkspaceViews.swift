@@ -44,6 +44,7 @@ extension LauncherView {
         Stepper("窗口宽度：\(m.windowWidth)",value:$m.windowWidth,in:640...3840,step:160)
         Stepper("窗口高度：\(m.windowHeight)",value:$m.windowHeight,in:360...2160,step:90)
         Divider()
+        Toggle("内置背景动画",isOn:$animateBuiltInBackground)
         HStack{Text("背景");Spacer();Button("选择图片或视频…"){m.chooseBackdrop()};if !m.backdropPath.isEmpty{Button("恢复内置背景"){m.resetBackdrop()}}}
         Text("PNG、JPEG、MP4 或 MOV，仅保存在本机；视频静音循环，窗口不活跃时暂停。默认使用内置壁纸，也可换成自己的背景；重新打开会保留选择。").font(.caption).foregroundStyle(.secondary)
         Group {

@@ -39,7 +39,7 @@ struct LauncherGlassGroup<Content:View>:View {
 /// System vibrancy samples the desktop behind this window, without screen capture.
 struct WindowVibrancy:NSViewRepresentable {
     final class BackgroundView:NSVisualEffectView {
-        override func viewDidMoveToWindow(){super.viewDidMoveToWindow();window?.isOpaque=false;window?.backgroundColor = .clear;window?.titlebarAppearsTransparent=true}
+        override func viewDidMoveToWindow(){super.viewDidMoveToWindow();window?.isOpaque=false;window?.backgroundColor = .windowBackgroundColor;window?.titlebarAppearsTransparent=false;window?.titleVisibility = .hidden}
     }
     func makeNSView(context:Context)->BackgroundView {
         let view=BackgroundView();view.material = .underWindowBackground;view.blendingMode = .behindWindow;view.state = .active;return view
@@ -50,11 +50,9 @@ struct WindowVibrancy:NSViewRepresentable {
 }
 
 struct NavigationGlassSelection:View {
-    @Environment(\.accessibilityReduceTransparency) private var reduced
     var body:some View {
-        if reduced {RoundedRectangle(cornerRadius:4).fill(Color.accentColor.opacity(0.18))}
-        else if #available(macOS 26.0,*) {RoundedRectangle(cornerRadius:4).fill(Color.accentColor.opacity(0.06)).glassEffect(.regular.tint(Color.accentColor.opacity(0.12)),in:RoundedRectangle(cornerRadius:4))}
-        else {RoundedRectangle(cornerRadius:4).fill(.thinMaterial)}
+        RoundedRectangle(cornerRadius:5).fill(Color.accentColor.opacity(0.10))
+            .overlay(alignment:.leading){RoundedRectangle(cornerRadius:2).fill(Color.accentColor).frame(width:3,height:18).padding(.leading,3)}
     }
 }
 
@@ -62,13 +60,19 @@ struct NavigationPressStyle:ButtonStyle {
     @Environment(\.accessibilityReduceMotion) private var reduced
     func makeBody(configuration:Configuration)->some View {
         configuration.label.scaleEffect(configuration.isPressed && !reduced ? 0.985:1)
-            .animation(reduced ? nil:.easeOut(duration:0.12),value:configuration.isPressed)
+            .animation(nil,value:configuration.isPressed)
     }
 }
 
 /// A restrained, joined launch control matching the reference layout.
-struct LauncherSplitGlass:ViewModifier {
-    func body(content:Content)->some View {
-        content.background(Color(red:0.35,green:0.43,blue:0.77),in:RoundedRectangle(cornerRadius:6)).foregroundStyle(.white)
+struct LauncherChrome:ViewModifier {
+    var radius:CGFloat=10
+    @Environment(\.accessibilityReduceTransparency) private var reduced
+    @ViewBuilder func body(content:Content)->some View {
+        if reduced {content.background(Color(nsColor:.controlBackgroundColor),in:RoundedRectangle(cornerRadius:radius))}
+        else {content.background(.ultraThinMaterial,in:RoundedRectangle(cornerRadius:radius))}
     }
+}
+struct LauncherSplitGlass:ViewModifier {
+    func body(content:Content)->some View {content.modifier(LauncherChrome(radius:10))}
 }

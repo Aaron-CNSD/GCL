@@ -11,6 +11,7 @@ cp macos/Info.plist "$out/GCL.app/Contents/Info.plist"
 cp macos/Assets/GCL.icns "$out/GCL.app/Contents/Resources/GCL.icns"
 cp macos/Assets/GCL-preview.png "$out/GCL.app/Contents/Resources/GCLIcon.png"
 cp macos/Assets/DefaultBackground.jpg "$out/GCL.app/Contents/Resources/DefaultBackground.jpg"
+if [ -f macos/Assets/DefaultBackground.mp4 ]; then cp macos/Assets/DefaultBackground.mp4 "$out/GCL.app/Contents/Resources/DefaultBackground.mp4"; fi
 cp LICENSE CONTRIBUTORS.md "$out/GCL.app/Contents/Resources/"
 mkdir -p "$out/GCL.app/Contents/Resources/ThirdParty"
 cp docs/third-party/* "$out/GCL.app/Contents/Resources/ThirdParty/"

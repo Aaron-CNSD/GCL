@@ -3,3 +3,5 @@ artifacts/
 *.class
 
 macos/Assets/GCL.iconset/
+
+macos/Assets/DefaultBackground.gif

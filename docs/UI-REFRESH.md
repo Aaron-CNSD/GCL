@@ -1,11 +1,7 @@
-# v0.2.0 HMCL-style refresh
+# GCL compact glass refresh
 
-Based on `3447ced`; the v0.2.0 game engine and functional pages remain unchanged.
+Default content size: 880×550 points; minimum: 820×520. The 36-point glass header, inset glass sidebar, teal accent and smaller joined launch control replace the solid indigo layout. Native macOS 26 glass is used with material fallback and Reduce Transparency support. Existing scenery and content-center functions are retained.
 
-- Restrained blue header, full-height flat translucent sidebar, small-radius controls, and same-height joined launch/version controls at the bottom right.
-- The built-in background is HMCL's unchanged `2021-08-26.jpg`, visually matched to the user's birch-coast/sheep reference. It is packaged in the app for offline use and needs no installed Minecraft assets or network connection.
-- User-selected PNG/JPEG/MP4/MOV backgrounds override the built-in image. Restore built-in background, fit/fill, display strength and blur remain available. Native video playback is muted and pauses when inactive or Reduce Motion is enabled.
-- Native Mac title-bar controls and the original GCL workbench icon are retained. The product is named GCL, not HMCL.
-- Source, SHA-256 and upstream license are preserved in `docs/third-party/HMCL-WALLPAPER.md` and `HMCL-LICENSE.txt`, included in the app. The About page links to the wallpaper source.
+Responsiveness changes: page navigation no longer animates entire glass pages or uses matched geometry. Press feedback has no timed animation. Background video is isolated from unrelated Model updates, pauses on content pages and inactive windows, and resumes using the existing player. AVPlayerLayer layout disables implicit layer animations. Playback commands are only sent when pause state changes; choosing a new video resets playback state.
 
-Validation (2026-10-27): after explicit user approval, official image download and preview launch succeeded. The native screenshot confirmed the packaged birch-coast scene, flat sidebar, blue header and matching-height launch controls. Apple Silicon and Intel compilation and app signature checks passed. The packaged background was compared byte-for-byte with the source and the license file was confirmed present. This pass did not test Minecraft entering a world or measure animation frame rate. No release or website deployment was performed.
+Validation: Apple Silicon/Intel compilation and signature/whitespace checks. The preview was launched and inspected: native glass header/sidebar/launch control rendered, and navigation to the content center plus its loader tab completed successfully. Perceived latency was not benchmarked; no quantitative latency improvement is claimed. No public release or deployment.
