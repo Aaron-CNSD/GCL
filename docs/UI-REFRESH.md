@@ -30,4 +30,4 @@ The default scene reads SHA-1-verified Minecraft panorama images already cached 
 
 The cached-background reader was checked against this Mac's real asset cache and returned a verified 1024×1024 image. It performs no network requests.
 
-The scenery revision compiled for Apple Silicon and Intel and passed signature verification. Opening this new preview was blocked by automatic approval, which requires a fresh user confirmation; its final native screenshot remains pending.
+The scenery revision compiled for Apple Silicon and Intel and passed signature verification. Automatic approval initially required confirmation. The user approved this revision; the native preview then opened and its screenshot confirmed the cached Minecraft scenery, glass sidebar, capsule launch button and bottom-right placement. The screenshot is local and has not been uploaded publicly.
