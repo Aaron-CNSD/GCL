@@ -13,3 +13,11 @@ Icon source: `macos/Assets/GCL.svg`. Run `node scripts/render-icons.cjs` with `s
 The local preview is not a published release. Window and navigation checks do not demonstrate Minecraft entering a world or multiplayer across devices.
 
 Validation (2026-10-27): Apple Silicon and Intel compilation passed; the universal app signature was verified. The isolated native preview showed the workbench icon, grouped navigation and home launch control. The version/configuration popover opened, and the version-management page displayed the retained configuration, instance, loader and import controls. New instance creation and gameplay were not verified in this pass.
+
+## Native glass and motion refinement
+
+The accepted layout is unchanged. macOS 26 uses native glass surfaces and glass buttons; the home launch controls share a GlassEffectContainer. Navigation selection moves with matched geometry, pages fade with a five-point offset over 220 ms, and button press feedback uses a small scale change. All these animations are disabled under Reduce Motion. Reduce Transparency uses opaque panels; older macOS versions use system materials. Window vibrancy uses NSVisualEffectView behind-window blending, without screen capture. A frost/clear preference is available on macOS 26.
+
+This refinement requires a fresh native preview check; compilation is not a visual or frame-rate measurement.
+
+The glass refinement compiled for Apple Silicon and Intel and passed app signature verification. Automatic approval blocked opening the newly built local preview until the user provides confirmation at action time; its visual and interaction check remains pending.

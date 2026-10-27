@@ -46,6 +46,7 @@ extension LauncherView {
         Divider()
         HStack{Text("背景");Spacer();Button("选择图片或视频…"){m.chooseBackdrop()};if !m.backdropPath.isEmpty{Button("恢复默认"){m.resetBackdrop()}}}
         Text("PNG、JPEG、MP4 或 MOV，仅保存在本机；视频静音循环，窗口不活跃时暂停。").font(.caption).foregroundStyle(.secondary)
+        if #available(macOS 26.0,*) {Picker("玻璃质感",selection:$clearGlass){Text("磨砂").tag(false);Text("通透").tag(true)}.pickerStyle(.segmented).frame(maxWidth:300)}
         Picker("外观",selection:$m.appearance){Text("跟随系统").tag("system");Text("浅色").tag("light");Text("深色").tag("dark")}
         Button("保存当前配置设置"){m.savePreferences()}.buttonStyle(.borderedProminent)
         Text("macOS 26+ 使用系统液态玻璃；旧系统使用半透明材质。保存后，下次启动会应用窗口尺寸与内存。").font(.caption).foregroundStyle(.secondary)

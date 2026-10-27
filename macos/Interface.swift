@@ -86,14 +86,12 @@ import UniformTypeIdentifiers
 struct GlassPanel<Content:View>:View {
     let content:Content
     init(@ViewBuilder content:()->Content){self.content=content()}
-    var body:some View{panel.padding(2)}
-    @ViewBuilder var panel:some View{
-        if #available(macOS 26.0,*){content.padding(20).frame(maxWidth:.infinity,alignment:.leading).glassEffect(.regular,in:RoundedRectangle(cornerRadius:14))}
-        else{content.padding(20).frame(maxWidth:.infinity,alignment:.leading).background(.ultraThinMaterial,in:RoundedRectangle(cornerRadius:14)).overlay(RoundedRectangle(cornerRadius:14).stroke(.white.opacity(0.25)))}
-    }
+    var body:some View {content.padding(20).frame(maxWidth:.infinity,alignment:.leading).modifier(LauncherGlassSurface()).padding(2)}
 }
 struct LauncherView:View {
     @ObservedObject var m:Model
+    @Namespace var navigationSelection
+    @AppStorage("clearGlass") var clearGlass=false
     @Environment(\.accessibilityReduceMotion) var reduceMotion
     let pages=[("开始游戏","play.fill"),("版本管理","square.stack.3d.up"),("模组管理","puzzlepiece.extension"),("资源下载","square.and.arrow.down"),("一键联机","person.2.fill"),("我的皮肤","tshirt"),("任务与日志","waveform.path.ecg"),("启动设置","slider.horizontal.3"),("关于 GCL","info.circle")]
     var configuration:some View{GlassPanel{VStack(alignment:.leading,spacing:14){HStack{Text("游戏配置").font(.headline);Spacer();Button("打开目录"){m.openFolder()}}

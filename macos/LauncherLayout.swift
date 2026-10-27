@@ -16,6 +16,7 @@ struct SidebarMaterial:ViewModifier {
 }
 
 extension LauncherView {
+    private var pageTransition:AnyTransition {reduceMotion ? .identity:.opacity.combined(with:.offset(y:5))}
     private var selectedTitle:String {m.packs.first(where:{$0["id"]==m.packID})?["name"] ?? "Minecraft \(m.selected)"}
     var body:some View {
         HStack(spacing:0) {
@@ -32,8 +33,9 @@ extension LauncherView {
                         if !m.backdropPath.isEmpty {Button("恢复默认背景"){m.resetBackdrop()}}
                     } label:{Image(systemName:"photo").frame(width:22,height:22)}.menuStyle(.borderlessButton).fixedSize().help("更换背景")
                 }.padding(.horizontal,28).padding(.top,24).padding(.bottom,20)
+                ZStack(alignment:.topLeading) {
                 if m.page == "开始游戏" {
-                    home.frame(maxWidth:.infinity,maxHeight:.infinity)
+                    home.frame(maxWidth:.infinity,maxHeight:.infinity).transition(pageTransition)
                 } else {
                     ScrollView {
                         VStack(spacing:16) {
@@ -49,8 +51,9 @@ extension LauncherView {
                             default:EmptyView()
                             }
                         }.frame(maxWidth:900).frame(maxWidth:.infinity).padding(.horizontal,24).padding(.bottom,16)
-                    }.frame(maxWidth:.infinity,maxHeight:.infinity)
+                    }.frame(maxWidth:.infinity,maxHeight:.infinity).id(m.page).transition(pageTransition)
                 }
+                }.animation(reduceMotion ? nil:.easeInOut(duration:0.22),value:m.page)
                 statusLine
             }
         }
@@ -89,12 +92,12 @@ extension LauncherView {
     }
     private func sectionTitle(_ title:String)->some View {Text(title).font(.system(size:10,weight:.medium)).foregroundStyle(.secondary).padding(.horizontal,24).padding(.top,16).padding(.bottom,7)}
     private func navigationRow(_ item:(String,String))->some View {
-        Button{withAnimation(reduceMotion ? nil:.easeOut(duration:0.16)){m.page=item.0}}label:{
+        Button{withAnimation(reduceMotion ? nil:.spring(response:0.32,dampingFraction:0.88)){m.page=item.0}}label:{
             HStack(spacing:12){Image(systemName:item.1).font(.system(size:15,weight:.regular)).frame(width:20);Text(item.0).font(.system(size:13,weight:m.page==item.0 ? .semibold:.regular));Spacer()}
                 .padding(.horizontal,12).frame(height:36)
-                .background(m.page==item.0 ? Color.accentColor.opacity(0.13):Color.clear,in:RoundedRectangle(cornerRadius:7))
+                .background{if m.page==item.0{NavigationGlassSelection().matchedGeometryEffect(id:"navigation-selection",in:navigationSelection)}}
                 .contentShape(Rectangle())
-        }.buttonStyle(.plain).padding(.horizontal,10).accessibilityAddTraits(m.page==item.0 ? .isSelected:[])
+        }.buttonStyle(NavigationPressStyle()).padding(.horizontal,10).accessibilityAddTraits(m.page==item.0 ? .isSelected:[])
     }
     private var home:some View {
         VStack(alignment:.leading,spacing:0) {
@@ -103,26 +106,26 @@ extension LauncherView {
                 VStack(alignment:.leading,spacing:3){Text(selectedTitle).font(.system(size:15,weight:.medium)).lineLimit(1);Text(m.packID.isEmpty ? "原版 · 独立游戏目录":"独立配置 · 模组与设置隔离").font(.caption).foregroundStyle(.secondary)}
                 Spacer()
                 Button("管理版本"){m.page="版本管理"}.buttonStyle(.borderless).font(.caption)
-            }.padding(16).background(.thinMaterial,in:RoundedRectangle(cornerRadius:10)).frame(maxWidth:410)
+            }.padding(16).modifier(LauncherGlassSurface()).frame(maxWidth:410)
             Spacer(minLength:100)
             HStack(alignment:.bottom,spacing:20) {
                 VStack(alignment:.leading,spacing:12) {
                     Button{m.importModpack()}label:{Label("导入整合包",systemImage:"shippingbox")}
                     Button{m.openFolder()}label:{Label("打开游戏目录",systemImage:"folder")}
-                }.font(.caption).buttonStyle(.borderless).disabled(m.busy)
+                }.font(.caption).modifier(LauncherGlassButton()).disabled(m.busy)
                 Spacer(minLength:0)
                 launchControl
             }
         }.padding(.horizontal,28).padding(.top,4).padding(.bottom,28)
     }
     private var launchControl:some View {
-        HStack(spacing:1) {
+        LauncherGlassGroup {HStack(spacing:8) {
             Button{m.start()}label:{
                 HStack(spacing:14){Image(systemName:m.busy ? "hourglass":"play.fill").font(.system(size:19));VStack(alignment:.leading,spacing:5){Text(m.busy ? "正在运行":"启动游戏").font(.system(size:20,weight:.medium));Text(selectedTitle).font(.system(size:11)).lineLimit(1)}}
-                    .frame(width:200,height:76).foregroundStyle(.white).contentShape(Rectangle())
-            }.buttonStyle(.plain).background(Color.accentColor).disabled(m.busy)
-            Button{m.showVersionChooser.toggle()}label:{Image(systemName:"chevron.up").font(.system(size:12,weight:.semibold)).foregroundStyle(.white).frame(width:36,height:76).contentShape(Rectangle())}
-                .buttonStyle(.plain).background(Color.accentColor).disabled(m.busy).help("选择版本与配置")
+                    .frame(width:180,height:58).contentShape(Rectangle())
+            }.modifier(LauncherGlassButton(prominent:true)).disabled(m.busy)
+            Button{m.showVersionChooser.toggle()}label:{Image(systemName:"chevron.up").font(.system(size:12,weight:.semibold)).frame(width:26,height:58).contentShape(Rectangle())}
+                .modifier(LauncherGlassButton()).disabled(m.busy).help("选择版本与配置")
                 .popover(isPresented:$m.showVersionChooser,arrowEdge:.bottom){
                     VStack(alignment:.leading,spacing:16){
                         Text("选择游戏").font(.headline)
@@ -133,7 +136,7 @@ extension LauncherView {
                         HStack{Spacer();Button("完成"){m.showVersionChooser=false}.keyboardShortcut(.defaultAction)}
                     }.padding(20).frame(width:280)
                 }
-        }.background(Color.accentColor.opacity(0.35)).clipShape(RoundedRectangle(cornerRadius:9)).accessibilityElement(children:.contain)
+        }}.accessibilityElement(children:.contain)
     }
     private var statusLine:some View {
         HStack(spacing:8) {
@@ -142,6 +145,6 @@ extension LauncherView {
             Spacer(minLength:8)
             if m.busy {Button("停止"){m.cancel()}.font(.caption)}
             else if m.page != "开始游戏" {Button("返回启动"){m.page="开始游戏"}.font(.caption)}
-        }.padding(.horizontal,28).padding(.vertical,12).frame(minHeight:40).background(.bar)
+        }.padding(.horizontal,28).padding(.vertical,12).frame(minHeight:40)
     }
 }

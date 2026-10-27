@@ -5,10 +5,11 @@ struct LauncherBackdrop:View {
     let path:String
     @Environment(\.scenePhase) private var phase
     @Environment(\.accessibilityReduceMotion) private var reducedMotion
+    @Environment(\.accessibilityReduceTransparency) private var reducedTransparency
     var body:some View {
         GeometryReader{geometry in
             ZStack {
-                Color(nsColor:.windowBackgroundColor)
+                if reducedTransparency {Color(nsColor:.windowBackgroundColor)}else{WindowVibrancy()}
                 if !path.isEmpty,FileManager.default.fileExists(atPath:path) {
                     if ["mp4","mov","m4v"].contains(URL(fileURLWithPath:path).pathExtension.lowercased()) {
                         LocalBackdropVideo(url:URL(fileURLWithPath:path),paused:phase != .active || reducedMotion)
