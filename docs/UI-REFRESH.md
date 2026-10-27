@@ -18,6 +18,6 @@ Validation (2026-10-27): Apple Silicon and Intel compilation passed; the univers
 
 The accepted layout is unchanged. macOS 26 uses native glass surfaces and glass buttons; the home launch controls share a GlassEffectContainer. Navigation selection moves with matched geometry, pages fade with a five-point offset over 220 ms, and button press feedback uses a small scale change. All these animations are disabled under Reduce Motion. Reduce Transparency uses opaque panels; older macOS versions use system materials. Window vibrancy uses NSVisualEffectView behind-window blending, without screen capture. A frost/clear preference is available on macOS 26.
 
-This refinement requires a fresh native preview check; compilation is not a visual or frame-rate measurement.
+The isolated native preview was opened after user confirmation. The version popover and settings page opened, the frost/clear control was changed, and navigation returned to the home page. The home glass surfaces and controls were captured. This is not a frame-rate measurement or gameplay test.
 
-The glass refinement compiled for Apple Silicon and Intel and passed app signature verification. Automatic approval blocked opening the newly built local preview until the user provides confirmation at action time; its visual and interaction check remains pending.
+The glass refinement compiled for Apple Silicon and Intel and passed app signature verification. Automatic approval initially required confirmation to run the local preview. The user explicitly approved running and checking it; the preview then opened successfully.
