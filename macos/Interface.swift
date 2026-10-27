@@ -16,6 +16,7 @@ import UniformTypeIdentifiers
     @Published var loaderBuilds=[String]()
     @Published var loadingLoaders=false
     @Published var page="开始游戏"
+    @Published var showVersionChooser=false
     @Published var query=""
     @Published var resourceType="mod"
     @Published var hits=[ResourceHit]()
@@ -37,7 +38,31 @@ import UniformTypeIdentifiers
     @Published var gameLog="暂无日志"
     @Published var activities=[ActivityItem]()
     var settingsRequest=0,modRequest=0
-    let engine=Engine()
+    @Published var backdropPath=UserDefaults.standard.string(forKey:"backdropPath") ?? ""
+    let engine:Engine
+    let demoMode=Bundle.main.object(forInfoDictionaryKey:"GCLDemoMode") as? Bool == true
+    init(){
+        if demoMode {
+            engine=Engine(root:FileManager.default.temporaryDirectory.appendingPathComponent("gcl-v02-preview-"+UUID().uuidString))
+            name="Player";server="";appearance="light";selected="1.21.1";versions=["1.21.1","1.20.1","1.19.4"];status="准备就绪";backdropPath=""
+        } else {engine=Engine()}
+    }
+    func chooseBackdrop(){
+        let panel=NSOpenPanel();panel.allowedContentTypes=[.png,.jpeg,.mpeg4Movie,.quickTimeMovie]
+        guard panel.runModal() == .OK,let source=panel.url else{return}
+        do {
+            let size=try source.resourceValues(forKeys:[.fileSizeKey]).fileSize ?? 0
+            guard size>0,size<=512*1024*1024 else{throw LaunchError(message:"请选择小于 512 MB 的图片或视频")}
+            if ["png","jpg","jpeg"].contains(source.pathExtension.lowercased()),NSImage(contentsOf:source)==nil{throw LaunchError(message:"无法读取这张图片")}
+            let directory=FileManager.default.urls(for:.applicationSupportDirectory,in:.userDomainMask)[0].appendingPathComponent("GCL/Backgrounds")
+            try FileManager.default.createDirectory(at:directory,withIntermediateDirectories:true)
+            let destination=directory.appendingPathComponent(UUID().uuidString).appendingPathExtension(source.pathExtension)
+            try FileManager.default.copyItem(at:source,to:destination)
+            backdropPath=destination.path;UserDefaults.standard.set(backdropPath,forKey:"backdropPath")
+        }catch{status="背景导入失败：\(error.localizedDescription)"}
+    }
+    func resetBackdrop(){backdropPath="";UserDefaults.standard.removeObject(forKey:"backdropPath")}
+
     var job:Task<Void,Never>?,searchID=0,loaderRequest=0
     var currentPack:String? {packID.isEmpty ? nil:packID}
     func progress(_ text:String){status=text;if activities.last?.text != text{activities.append(ActivityItem(text:text));if activities.count>60{activities.removeFirst(activities.count-60)}}}
@@ -63,35 +88,21 @@ struct GlassPanel<Content:View>:View {
     init(@ViewBuilder content:()->Content){self.content=content()}
     var body:some View{panel.padding(2)}
     @ViewBuilder var panel:some View{
-        if #available(macOS 26.0,*){content.padding(22).frame(maxWidth:.infinity,alignment:.leading).glassEffect(.regular,in:RoundedRectangle(cornerRadius:24))}
-        else{content.padding(22).frame(maxWidth:.infinity,alignment:.leading).background(.ultraThinMaterial,in:RoundedRectangle(cornerRadius:24)).overlay(RoundedRectangle(cornerRadius:24).stroke(.white.opacity(0.25)))}
+        if #available(macOS 26.0,*){content.padding(20).frame(maxWidth:.infinity,alignment:.leading).glassEffect(.regular,in:RoundedRectangle(cornerRadius:14))}
+        else{content.padding(20).frame(maxWidth:.infinity,alignment:.leading).background(.ultraThinMaterial,in:RoundedRectangle(cornerRadius:14)).overlay(RoundedRectangle(cornerRadius:14).stroke(.white.opacity(0.25)))}
     }
 }
 struct LauncherView:View {
     @ObservedObject var m:Model
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    let pages=[("开始游戏","play.fill"),("版本管理","square.stack.3d.up"),("模组管理","puzzlepiece.extension"),("资源下载","square.and.arrow.down"),("一键联机","person.2.fill"),("我的皮肤","person.crop.square"),("任务与日志","waveform.path.ecg"),("启动设置","slider.horizontal.3"),("关于 GCL","info.circle")]
-    var body:some View{HStack(spacing:0){
-        VStack(alignment:.leading,spacing:26){HStack(spacing:10){Image(nsImage:NSApplication.shared.applicationIconImage).resizable().frame(width:32,height:32);Text("GCL").font(.title2.bold())}.padding(.top,20)
-            VStack(spacing:7){ForEach(pages,id:\.0){page in Button{withAnimation(reduceMotion ? nil:.easeInOut(duration:0.18)){m.page=page.0}}label:{Label(page.0,systemImage:page.1).frame(maxWidth:.infinity,alignment:.leading).padding(12).background(m.page==page.0 ? Color.cyan.opacity(0.22):Color.clear,in:RoundedRectangle(cornerRadius:12))}.buttonStyle(.plain)}}
-            Spacer();Text("0.2 · macOS").font(.caption.monospaced()).foregroundStyle(.secondary);Button("查看日志"){m.openFolder(logs:true)}.buttonStyle(.borderless)
-        }.padding(22).frame(width:210).background(.ultraThinMaterial)
-        VStack(alignment:.leading,spacing:18){
-            HStack{VStack(alignment:.leading){Text(m.page).font(.largeTitle.bold());Text("你的世界，由你定义。").foregroundStyle(.secondary)};Spacer();Text(m.selected).font(.headline.monospaced()).padding(10).background(.thinMaterial,in:Capsule())}
-            ScrollView{VStack(spacing:16){configuration
-                switch m.page{case "资源下载":resources;case "一键联机":multiplayer;case "我的皮肤":skin;case "关于 GCL":about;case "版本管理":instances;case "模组管理":modManager;case "任务与日志":diagnostics;case "启动设置":launchSettings;default:play}
-            }.padding(2)}
-            HStack(spacing:12){if m.busy{ProgressView().controlSize(.small)};Text(m.status).font(.caption.monospaced()).textSelection(.enabled).frame(maxWidth:.infinity,alignment:.leading);if m.busy{Button("取消 / 停止"){m.cancel()}}}.padding(15).background(.regularMaterial,in:RoundedRectangle(cornerRadius:16))
-        }.padding(28)
-    }.frame(minWidth:980,minHeight:680).background{ZStack{Color(nsColor:.windowBackgroundColor);LinearGradient(colors:[.cyan.opacity(0.22),.blue.opacity(0.08),.purple.opacity(0.2)],startPoint:.topLeading,endPoint:.bottomTrailing)}}.onAppear{m.refresh();m.loadWorkspace()}.onChange(of:m.selected){_ in m.resetResources();m.loadVersions();m.loadPreferences();m.refreshMods()}.onChange(of:m.appearance){value in UserDefaults.standard.set(value,forKey:"appearance")}.onChange(of:m.page){value in if value=="模组管理"{m.refreshMods()}}.preferredColorScheme(m.appearance=="dark" ? .dark:m.appearance=="light" ? .light:nil)}
+    @Environment(\.accessibilityReduceMotion) var reduceMotion
+    let pages=[("开始游戏","play.fill"),("版本管理","square.stack.3d.up"),("模组管理","puzzlepiece.extension"),("资源下载","square.and.arrow.down"),("一键联机","person.2.fill"),("我的皮肤","tshirt"),("任务与日志","waveform.path.ecg"),("启动设置","slider.horizontal.3"),("关于 GCL","info.circle")]
     var configuration:some View{GlassPanel{VStack(alignment:.leading,spacing:14){HStack{Text("游戏配置").font(.headline);Spacer();Button("打开目录"){m.openFolder()}}
         HStack{TextField("本地用户名",text:$m.name).textFieldStyle(.roundedBorder).frame(width:155);Picker("Minecraft",selection:$m.selected){ForEach(m.versions,id:\.self){Text($0)}}.disabled(!m.packID.isEmpty)}
         Picker("启动配置",selection:$m.packID){Text("新建 / 原版").tag("");ForEach(m.packs,id:\.self){pack in Text(pack["name"] ?? "整合包").tag(pack["id"] ?? "")}}.onChange(of:m.packID){id in m.resetResources();m.loadPreferences();m.refreshMods();if let pack=m.packs.first(where:{$0["id"]==id}){m.selected=pack["minecraft"] ?? m.selected}}
     }.disabled(m.busy)}}
-    var play:some View{GlassPanel{VStack(alignment:.leading,spacing:20){Label("准备下一场冒险",systemImage:"sparkles").font(.title2.bold())
+    var play:some View{GlassPanel{VStack(alignment:.leading,spacing:20){Label("安装游戏与加载器",systemImage:"square.and.arrow.down").font(.title3.weight(.semibold))
         HStack{Picker("加载器",selection:$m.loaderKind){ForEach(["原版","Forge","NeoForge","Fabric","Quilt"],id:\.self){Text($0)}}.onChange(of:m.loaderKind){_ in m.loadVersions()};Picker(m.loadingLoaders ? "读取中":"版本",selection:$m.loaderBuild){Text("请选择").tag("");ForEach(m.loaderBuilds,id:\.self){Text($0)}};Button("安装"){m.installLoader()}.disabled(m.loaderBuild.isEmpty || m.loadingLoaders)}.disabled(m.busy || !m.packID.isEmpty)
         HStack{Text("内存 \(Int(m.memory)) MB").monospacedDigit();Slider(value:$m.memory,in:2048...m.maxMemoryMB,step:1024)}.disabled(m.busy)
-        Button{m.start()}label:{Label("下载并启动",systemImage:"play.fill").frame(maxWidth:.infinity).padding(10)}.buttonStyle(.borderedProminent).tint(.blue).disabled(m.busy)
         HStack{Button("导入 .mrpack"){m.importModpack()};Button("导入模组"){m.importFile(shader:false)};Button("导入光影"){m.importFile(shader:true)}}.disabled(m.busy)
         Text("游戏、Java 与资源均在软件内下载。支持 1.19+；CurseForge ZIP 尚未支持，Forge / NeoForge 仍有未验证的兼容情况。").font(.caption).foregroundStyle(.secondary)
     }}}
@@ -107,7 +118,7 @@ struct LauncherView:View {
         Text("此功能不创建服务器、不提供公网穿透；要求 Microsoft 验证的服务器仍无法加入。").font(.caption).foregroundStyle(.secondary)
     }}}
     var about:some View{GlassPanel{VStack(alignment:.leading,spacing:16){Text("GCL · GlassCraft Launcher").font(.title2.bold());Text("项目维护：Aaron-CNSD");Text("使用 Codex 辅助实现与验证；不添加虚构的人类贡献者。").foregroundStyle(.secondary);Text("开源致谢").font(.headline);Text("Terracotta / burningtnt：房间联机组件\nCustomSkinLoader / xfl03：本地皮肤模组\nFabricMC · QuiltMC · MinecraftForge · NeoForged\nEclipse Adoptium · Modrinth · Mojang / Microsoft");Text("GPL-3.0 · 第三方遵循各自许可。非 Mojang / Microsoft 官方产品。").font(.caption);Link("项目与贡献记录",destination:URL(string:"https://github.com/Aaron-CNSD/GCL")!);Text("0.2 开发预览 · macOS 13+ · JAR 仅作为 Mac 原生应用入口，不代表支持 Windows / Linux。").font(.caption).foregroundStyle(.secondary)}}}
-    var skin:some View{GlassPanel{VStack(alignment:.leading,spacing:18){Label("换上新的自己",systemImage:"person.crop.square").font(.title2.bold());HStack(spacing:20){if let image=m.skinPreview{Image(nsImage:image).interpolation(.none).resizable().scaledToFit().frame(width:100,height:100).background(.quaternary,in:RoundedRectangle(cornerRadius:12))}else{Image(systemName:"person.crop.square").font(.system(size:65)).foregroundStyle(.secondary)};VStack(alignment:.leading,spacing:8){Text("本地 PNG 皮肤").font(.headline);Text("64×64 或 64×32 · 小于 2 MB").foregroundStyle(.secondary);Button("选择并一键应用"){m.chooseSkin()}.buttonStyle(.borderedProminent).disabled(m.busy)}}
+    var skin:some View{GlassPanel{VStack(alignment:.leading,spacing:18){Label("皮肤设置",systemImage:"tshirt").font(.title2.bold());HStack(spacing:20){if let image=m.skinPreview{Image(nsImage:image).interpolation(.none).resizable().scaledToFit().frame(width:100,height:100).background(.quaternary,in:RoundedRectangle(cornerRadius:12))}else{Image(systemName:"tshirt").font(.system(size:65)).foregroundStyle(.secondary)};VStack(alignment:.leading,spacing:8){Text("本地 PNG 皮肤").font(.headline);Text("64×64 或 64×32 · 小于 2 MB").foregroundStyle(.secondary);Button("选择并一键应用"){m.chooseSkin()}.buttonStyle(.borderedProminent).disabled(m.busy)}}
         Text("自动下载兼容的 CustomSkinLoader。原版配置会自动创建 Fabric 配置；已有加载器则沿用当前配置。重启游戏后生效，皮肤图片保存在本机。").font(.callout)
         Text("本地皮肤不会同步给所有玩家；其他客户端需配置相同皮肤或皮肤服务才能看到。修改用户名后请重新应用。").font(.caption).foregroundStyle(.secondary)
     }}}

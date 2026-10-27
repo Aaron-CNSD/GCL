@@ -9,6 +9,7 @@ done
 lipo -create "$out/GCL-arm64" "$out/GCL-x86_64" -output "$out/GCL.app/Contents/MacOS/GCL"
 cp macos/Info.plist "$out/GCL.app/Contents/Info.plist"
 cp macos/Assets/GCL.icns "$out/GCL.app/Contents/Resources/GCL.icns"
+cp macos/Assets/GCL-preview.png "$out/GCL.app/Contents/Resources/GCLIcon.png"
 cp LICENSE CONTRIBUTORS.md "$out/GCL.app/Contents/Resources/"
 mkdir -p "$out/GCL.app/Contents/Resources/ThirdParty"
 cp docs/third-party/* "$out/GCL.app/Contents/Resources/ThirdParty/"
