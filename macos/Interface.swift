@@ -39,6 +39,7 @@ import UniformTypeIdentifiers
     @Published var diagnosticText="点击刷新诊断，查看当前配置与常见错误。"
     @Published var gameLog="暂无日志"
     @Published var activities=[ActivityItem]()
+    var didSetInitialWindowSize=false
     var settingsRequest=0,modRequest=0
     @Published var backdropPath=UserDefaults.standard.string(forKey:"backdropPath") ?? ""
     let engine:Engine
@@ -131,6 +132,6 @@ struct LauncherView:View {
 }
 
 #if !GLASSCRAFT_TESTS
-@main struct GCLApp:App{@StateObject var model=Model();var body:some Scene{WindowGroup{LauncherView(m:model)}.windowStyle(.titleBar).defaultSize(width:740,height:460).windowResizability(.contentMinSize)}}
+@main struct GCLApp:App{@StateObject var model=Model();var body:some Scene{WindowGroup{LauncherView(m:model)}.windowStyle(.titleBar).defaultSize(width:720,height:450).windowResizability(.contentMinSize)}}
 
 #endif

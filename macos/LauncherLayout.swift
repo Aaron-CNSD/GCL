@@ -35,9 +35,9 @@ extension LauncherView {
                 HStack(alignment:.center) {
                     if m.page != "开始游戏" {
                         VStack(alignment:.leading,spacing:4) {
-                            Text(pageLabel(m.page)).font(.system(size:22,weight:.semibold))
+                            Text(pageLabel(m.page)).font(.system(size:18,weight:.semibold))
                             Text("当前配置 · \(selectedTitle)").font(.caption).foregroundStyle(.secondary)
-                        }.padding(.horizontal,14).padding(.vertical,10).modifier(LauncherGlassSurface(radius:6))
+                        }.padding(.horizontal,10).padding(.vertical,8).modifier(LauncherGlassSurface(radius:6))
                     }
                     Spacer()
                 }.padding(.horizontal,12).padding(.top,m.page == "开始游戏" ? 0:14).padding(.bottom,m.page == "开始游戏" ? 0:12)
@@ -46,7 +46,7 @@ extension LauncherView {
                     home.frame(maxWidth:.infinity,maxHeight:.infinity).transition(pageTransition)
                 } else {
                     ScrollView {
-                        VStack(spacing:16) {
+                        VStack(spacing:12) {
                             switch m.page {
                             case "版本管理":configuration;instances
                             case "模组管理":modManager
@@ -58,7 +58,7 @@ extension LauncherView {
                             case "关于 GCL":about
                             default:EmptyView()
                             }
-                        }.frame(maxWidth:900).frame(maxWidth:.infinity).padding(.horizontal,14).padding(.bottom,12)
+                        }.controlSize(.small).font(.system(size:12)).frame(maxWidth:900).frame(maxWidth:.infinity).padding(.horizontal,14).padding(.bottom,12)
                     }.frame(maxWidth:.infinity,maxHeight:.infinity).id(m.page).transition(pageTransition)
                 }
                 }.animation(nil,value:m.page)
@@ -70,7 +70,7 @@ extension LauncherView {
         .background{LauncherBackdrop(path:m.backdropPath,playing:m.page == "开始游戏").equatable()}
         .tint(Color(red:0.18,green:0.38,blue:0.43))
         .accentColor(Color(red:0.18,green:0.38,blue:0.43))
-        .onAppear{if !m.demoMode {m.refresh();updater.check()};m.loadWorkspace();if m.demoMode{DispatchQueue.main.asyncAfter(deadline:.now()+0.3){NSApp.activate(ignoringOtherApps:true);NSApp.windows.first?.makeKeyAndOrderFront(nil)}}}
+        .onAppear{if !m.didSetInitialWindowSize {m.didSetInitialWindowSize=true;DispatchQueue.main.async{NSApp.windows.first(where:{$0.canBecomeMain})?.setContentSize(NSSize(width:720,height:450))}};if !m.demoMode {m.refresh();updater.check()};m.loadWorkspace();if m.demoMode{DispatchQueue.main.asyncAfter(deadline:.now()+0.3){NSApp.activate(ignoringOtherApps:true);NSApp.windows.first?.makeKeyAndOrderFront(nil)}}}
         .onChange(of:m.selected){_ in m.resetResources();m.loadVersions();m.loadPreferences();m.refreshMods()}
         .onChange(of:m.packID){id in m.resetResources();m.loadPreferences();m.refreshMods();if let pack=m.packs.first(where:{$0["id"]==id}){m.selected=pack["minecraft"] ?? m.selected}}
         .onChange(of:m.appearance){UserDefaults.standard.set($0,forKey:"appearance")}
@@ -90,9 +90,9 @@ extension LauncherView {
                 }
             }.padding(.horizontal,12).padding(.top,4).padding(.bottom,8)
             sectionTitle("游戏")
-            ForEach(pages.filter{["开始游戏","版本管理","资源下载","模组管理"].contains($0.0)},id:\.0){navigationRow($0)}
+            navigationGroup(["开始游戏","版本管理","资源下载","模组管理"])
             sectionTitle("通用")
-            ForEach(pages.filter{["一键联机","我的皮肤","任务与日志","启动设置","关于 GCL"].contains($0.0)},id:\.0){navigationRow($0)}
+            navigationGroup(["一键联机","我的皮肤","任务与日志","启动设置","关于 GCL"])
             Spacer(minLength:6)
             Text("v"+(Bundle.main.object(forInfoDictionaryKey:"CFBundleShortVersionString") as? String ?? "0.3.0")).font(.system(size:9,design:.monospaced)).foregroundStyle(.tertiary).padding(.leading,18).padding(.bottom,10)
         }
@@ -101,13 +101,24 @@ extension LauncherView {
         VStack(alignment:.leading,spacing:4){Text(title).font(.system(size:10)).foregroundStyle(.secondary);Divider()}
             .padding(.horizontal,12).padding(.top,5).padding(.bottom,3)
     }
+    private func navigationGroup(_ names:[String])->some View {
+        let items=pages.filter{names.contains($0.0)}
+        return VStack(spacing:0){
+            ForEach(Array(items.enumerated()),id:\.offset){index,item in
+                navigationRow(item)
+                if index<items.count-1 {Divider()}
+            }
+        }.background(.ultraThinMaterial,in:RoundedRectangle(cornerRadius:7))
+            .overlay{RoundedRectangle(cornerRadius:7).strokeBorder(Color.primary.opacity(0.12),lineWidth:0.5)}
+            .clipShape(RoundedRectangle(cornerRadius:7)).padding(.horizontal,6)
+    }
     private func navigationRow(_ item:(String,String))->some View {
         Button{m.page=item.0}label:{
-            HStack(spacing:7){Image(systemName:item.1).font(.system(size:12,weight:.regular)).frame(width:16);VStack(alignment:.leading,spacing:3){Text(pageLabel(item.0)).font(.system(size:11,weight:m.page==item.0 ? .semibold:.regular));if item.0=="版本管理"{Text(selectedTitle).font(.system(size:10)).foregroundStyle(.secondary).lineLimit(1)}};Spacer()}
+            HStack(alignment:.firstTextBaseline,spacing:7){Image(systemName:item.1).font(.system(size:12,weight:.regular)).frame(width:16);VStack(alignment:.leading,spacing:3){Text(pageLabel(item.0)).font(.system(size:11,weight:m.page==item.0 ? .semibold:.regular));if item.0=="版本管理"{Text(selectedTitle).font(.system(size:10)).foregroundStyle(.secondary).lineLimit(1)}};Spacer()}
                 .padding(.horizontal,8).frame(height:item.0=="版本管理" ? 34:25)
                 .background{if m.page==item.0{NavigationGlassSelection()}}
                 .contentShape(Rectangle())
-        }.buttonStyle(.plain).padding(.horizontal,6).accessibilityAddTraits(m.page==item.0 ? .isSelected:[])
+        }.buttonStyle(.plain).accessibilityAddTraits(m.page==item.0 ? .isSelected:[])
     }
     private func pageLabel(_ page:String)->String {
         switch page {case "一键联机":return "联机";case "版本管理":return "游戏配置";case "资源下载":return "下载与整合包";case "启动设置":return "设置";case "关于 GCL":return "关于与更新";default:return page}

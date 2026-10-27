@@ -1,7 +1,7 @@
-# GCL compact glass refresh
+# Compact v0.3.0 revision
 
-Default content size: 880×550 points; minimum: 820×520. The 36-point glass header, inset glass sidebar, teal accent and smaller joined launch control replace the solid indigo layout. Native macOS 26 glass is used with material fallback and Reduce Transparency support. Existing scenery and content-center functions are retained.
+Launch content size is now explicitly 720×450 points, matching the user's minimum-window screenshot. A one-time startup resize avoids restoring a larger previous window. Version remains 0.3.0; internal build is 31.
 
-Responsiveness changes: page navigation no longer animates entire glass pages or uses matched geometry. Press feedback has no timed animation. Background video is isolated from unrelated Model updates, pauses on content pages and inactive windows, and resumes using the existing player. AVPlayerLayer layout disables implicit layer animations. Playback commands are only sent when pause state changes; choosing a new video resets playback state.
+Navigation is grouped into connected segmented rows with an outer border, row dividers and aligned icon/text baselines. Fonts, title panels, controls and spacing are adapted to the small window. The house icon, background, LAN and update features remain.
 
-Validation: Apple Silicon/Intel compilation and signature/whitespace checks. The preview was launched and inspected: native glass header/sidebar/launch control rendered, and navigation to the content center plus its loader tab completed successfully. Perceived latency was not benchmarked; no quantitative latency improvement is claimed. No public release or deployment.
+Validation: universal compilation and signature; native preview screenshot 1440×964 Retina pixels (720×450 content plus 32-point titlebar); all sidebar actions and bottom-right launch control visible. Download page was opened and visually checked without horizontal clipping. Real gameplay and two-device LAN were not retested. Previous release assets and tag commit are backed up before replacement.
